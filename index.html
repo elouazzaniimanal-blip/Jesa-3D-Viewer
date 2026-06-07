@@ -5,7 +5,7 @@
     <title>JESA BIM 3D - Monitoring Final Corrigé</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Inter:wght@400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght=700&family=Inter:wght=400;600&display=swap');
         body { margin: 0; background-color: #050505; overflow: hidden; font-family: 'Inter', sans-serif; }
         #hud { 
             position: absolute; top: 20px; left: 20px; color: white; 
@@ -32,8 +32,8 @@
             Date Coulage : <strong>14/05/2026</strong>
         </div>
         <div class="data-row"><span>Type de Structure</span><strong id="txt-type" style="color: #ff6b00;">---</strong></div>
-        <div class="data-row"><span id="lbl-n1">Nappe X</span><span id="v-as" class="val-green">---</span></div>
-        <div class="data-row"><span id="lbl-n2">Nappe Y</span><span id="v-ah" class="val">---</span></div>
+        <div class="data-row"><span id="lbl-n1">Cadres supérieurs (Asup)</span><span id="v-as" class="val-green">---</span></div>
+        <div class="data-row"><span id="lbl-n2">Armatures d'angles (As)</span><span id="v-ah" class="val">---</span></div>
         <div class="data-row"><span>Cerces (at)</span><span id="v-at" class="val-white">---</span></div>
     </div>
 
@@ -81,8 +81,8 @@ function addEdges(mesh) {
 // --- INSERTION DE LA PARTIE SEMELLE À ENCUVEMENT ---
 {
     document.getElementById('txt-type').innerText = "SEMELLE À ENCUVEMENT";
-    document.getElementById('lbl-n1').innerText = "Nappe X";
-    document.getElementById('lbl-n2').innerText = "Nappe Y";
+    document.getElementById('lbl-n1').innerText = "Cadres supérieurs (Asup)";
+    document.getElementById('lbl-n2').innerText = "Armatures d'angles (As)";
 
     // --- 1. DÉFINITION DES MATÉRIAUX (COULEURS EXACTES DEMANDÉES) ---
     // Armatures longitudinales As en BEIGE
