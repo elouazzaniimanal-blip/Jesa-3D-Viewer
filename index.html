@@ -146,7 +146,7 @@ function addEdges(mesh) {
         group.add(bar);
     });
 
-    // --- AJOUT ET CORRECTION : ARMATURES EN U DANS LES 4 ANGLES DE L'ENCUVEMENT ---
+    // --- AJOUT ET CORRECTION FINALE : ARMATURES EN U DANS LES 4 ANGLES DE L'ENCUVEMENT ---
     const rBarreEnc = 0.012;
     const longRetour = 0.16; 
     
@@ -163,18 +163,25 @@ function addEdges(mesh) {
         addEdges(vBrin);
         ancrageGroup.add(vBrin);
 
-        // Patte inférieure (Pliée symétriquement vers l'intérieur)
+        // Détermination de l'orientation exacte pour que les retours pointent vers l'intérieur
+        let rotY = 0;
+        if (p.x === 1 && p.z === 1) rotY = 0;
+        if (p.x === 1 && p.z === -1) rotY = Math.PI / 2;
+        if (p.x === -1 && p.z === 1) rotY = -Math.PI / 2;
+        if (p.x === -1 && p.z === -1) rotY = Math.PI;
+
+        // Patte inférieure
         const pInf = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
         pInf.rotation.z = Math.PI / 2;
-        pInf.rotation.y = (p.x * p.z > 0) ? 0 : Math.PI / 2;
+        pInf.rotation.y = rotY;
         pInf.position.set(xEnc - (longRetour / 2) * p.x, -totalH / 2 + 0.03, zEnc);
         addEdges(pInf);
         ancrageGroup.add(pInf);
 
-        // Crochet supérieur (Plié symétriquement vers l'intérieur)
+        // Crochet supérieur
         const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
         pSup.rotation.z = Math.PI / 2;
-        pSup.rotation.y = (p.x * p.z > 0) ? 0 : Math.PI / 2;
+        pSup.rotation.y = rotY;
         pSup.position.set(xEnc - (longRetour / 2) * p.x, -totalH / 2 + eRadier + hf - 0.02, zEnc);
         addEdges(pSup);
         ancrageGroup.add(pSup);
