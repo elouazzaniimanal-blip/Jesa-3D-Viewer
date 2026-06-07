@@ -137,50 +137,13 @@ function addEdges(mesh) {
     addEdges(poteau);
     group.add(poteau);
 
-    // --- 6. FERRAILLAGE : ARMATURES LONGITUDINALES As (BEIGE AVEC CROCHETS COMPLETS ET PATTES) ---
+    // --- 6. FERRAILLAGE : ARMATURES LONGITUDINALES As (BEIGE) ---
     const posA = [{ x: 1, z: 1 }, { x: 1, z: -1 }, { x: -1, z: 1 }, { x: -1, z: -1 }];
-    const rayonBarre = 0.012;
-    const longueurPatte = 0.15; // Longueur du retour horizontal (patte d'ancrage et crochet supérieur)
-
     posA.forEach(p => {
-        // Création d'un groupe conteneur local pour réunir les éléments de la barre façonnée
-        const barreComposite = new THREE.Group();
-        
-        // Coordonnées de base du fil d'axe vertical
-        const posX = ((poteauA / 2) - 0.05) * p.x;
-        const posZ = ((poteauA / 2) - 0.05) * p.z;
-        const hauteurBarre = hPV + 0.2;
-
-        // A. Brin principal vertical
-        const brinVertical = new THREE.Mesh(new THREE.CylinderGeometry(rayonBarre, rayonBarre, hauteurBarre, 8), matBeigeAs);
-        brinVertical.position.set(posX, poteau.position.y, posZ);
-        addEdges(brinVertical);
-        barreComposite.add(brinVertical);
-
-        // B. Patte d'ancrage inférieure (Pliée à 90° vers l'intérieur de la cage)
-        const patteInf = new THREE.Mesh(new THREE.CylinderGeometry(rayonBarre, rayonBarre, longueurPatte, 8), matBeigeAs);
-        patteInf.rotation.z = Math.PI / 2;
-        patteInf.rotation.y = (p.x === p.z) ? 0 : Math.PI / 2; // Aligné vers le centre géométrique
-        
-        // Ajustement précis de position tout en bas du brin vertical
-        const yInf = poteau.position.y - (hauteurBarre / 2);
-        patteInf.position.set(posX - (longueurPatte / 2) * p.x, yInf, posZ);
-        addEdges(patteInf);
-        barreComposite.add(patteInf);
-
-        // C. Crochet de retour supérieur (Pliée à 90° vers l'intérieur pour fermer la cage)
-        const patteSup = new THREE.Mesh(new THREE.CylinderGeometry(rayonBarre, rayonBarre, longueurPatte, 8), matBeigeAs);
-        patteSup.rotation.z = Math.PI / 2;
-        patteSup.rotation.y = (p.x === p.z) ? 0 : Math.PI / 2;
-        
-        // Ajustement précis tout en haut du brin vertical
-        const ySup = poteau.position.y + (hauteurBarre / 2);
-        patteSup.position.set(posX - (longueurPatte / 2) * p.x, ySup, posZ);
-        addEdges(patteSup);
-        barreComposite.add(patteSup);
-
-        // Ajout de la structure façonnée complète au repère global de la scène
-        group.add(barreComposite);
+        const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, hPV + 0.2, 8), matBeigeAs);
+        bar.position.set(((poteauA / 2) - 0.05) * p.x, poteau.position.y, ((poteauA / 2) - 0.05) * p.z);
+        addEdges(bar);
+        group.add(bar);
     });
 
     // --- 7. FERRAILLAGE : CADRES DU POTEAU (BEIGE OU STANDARD) ---
