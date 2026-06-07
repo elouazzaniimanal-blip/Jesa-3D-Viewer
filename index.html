@@ -11,9 +11,7 @@
             position: absolute; top: 20px; left: 20px; color: white; 
             background: rgba(10, 10, 10, 0.95); padding: 20px; 
             border-left: 6px solid #ff6b00; z-index: 100; border-radius: 4px;
-            width: 320px;
-            max-height: 90vh;
-            overflow-y: auto;
+            min-width: 280px;
         }
         .logo { font-family: 'Orbitron', sans-serif; color: #ff6b00; font-size: 14px; margin-bottom: 15px; }
         .info-massif { font-size: 12px; line-height: 1.6; margin-bottom: 15px; color: #ccc; }
@@ -22,25 +20,6 @@
         .val { color: #8B4513; font-weight: bold; }
         .val-green { color: #b08d57; font-weight: bold; }
         .val-white { color: #ffffff; font-weight: bold; }
-        
-        /* Styles pour la nouvelle section de schématisation technique */
-        .tech-schematic {
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 2px dashed rgba(255,255,255,0.15);
-            font-size: 11px;
-            line-height: 1.5;
-            color: #b3b3b3;
-        }
-        .tech-title {
-            font-family: 'Orbitron', sans-serif;
-            color: #ff6b00;
-            font-size: 11px;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-        .tech-item { margin-bottom: 10px; }
-        .tech-item strong { color: #fff; display: block; margin-bottom: 2px; }
     </style>
 </head>
 <body>
@@ -56,25 +35,6 @@
         <div class="data-row"><span id="lbl-n1">Cadres supérieurs (Asup)</span><span id="v-as" class="val-green">---</span></div>
         <div class="data-row"><span id="lbl-n2">Armatures d'angles (As)</span><span id="v-ah" class="val">---</span></div>
         <div class="data-row"><span>Cerces (at)</span><span id="v-at" class="val-white">---</span></div>
-
-        <div class="tech-schematic">
-            <div class="tech-title">Schématisation des Armatures</div>
-            
-            <div class="tech-item">
-                <strong>Les Armatures d'Angles (Aciers Verticaux principaux) :</strong>
-                Les armatures d'angles (qui correspondent aux barres beiges/blanches de ton modèle 3D) sont les barres de gros diamètre qui montent verticalement.
-            </div>
-            
-            <div class="tech-item">
-                <strong>Où les voir :</strong>
-                Regarde les quatre pièces de la cage rectangulaire. Tu y verras des barres verticales épaisses. L'ouvrier sur la photo est d'ailleurs en train de guider la cage en posant ses mains près de ces lignes d'angles. On voit bien que ces aciers se terminent en haut par des crochets ou des boucles (les croix de retour) pour assurer un bon ancrage dans le futur béton.
-            </div>
-            
-            <div class="tech-item">
-                <strong>À quoi elles servent :</strong>
-                Elles représentent les efforts de flexion et les moments transmis par le poteau à la fondation (par exemple si le poteau subit des forces latérales dues au vent ou à un séisme sur la structure).
-            </div>
-        </div>
     </div>
 
 <script type="module">
