@@ -146,42 +146,36 @@ function addEdges(mesh) {
         group.add(bar);
     });
 
-    // --- AJOUT ET CORRECTION FINALE : ARMATURES EN U DANS LES 4 ANGLES DE L'ENCUVEMENT ---
+    // --- AJOUT : ARMATURES EN U DANS LES 4 EXTRÉMITÉS DE L'ENCUVEMENT ---
     const rBarreEnc = 0.012;
-    const longRetour = 0.16; 
+    const longRetour = 0.16; // Longueur des retours horizontaux pliés
     
     posA.forEach(p => {
         const ancrageGroup = new THREE.Group();
         
+        // Positionnement précis juste à l'intérieur des parois externes de l'encuvement
         const xEnc = ((L_enc / 2) - 0.05) * p.x;
         const zEnc = ((L_enc / 2) - 0.05) * p.z;
         
-        // Brin vertical
+        // Brin vertical (fait toute la hauteur du fût creux + ancrage dans le radier)
         const hautBrin = hf + eRadier - 0.05;
         const vBrin = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, hautBrin, 8), matBeigeAs);
         vBrin.position.set(xEnc, (-totalH / 2) + (hautBrin / 2) + 0.02, zEnc);
         addEdges(vBrin);
         ancrageGroup.add(vBrin);
 
-        // Détermination de l'orientation exacte pour que les retours pointent vers l'intérieur
-        let rotY = 0;
-        if (p.x === 1 && p.z === 1) rotY = 0;
-        if (p.x === 1 && p.z === -1) rotY = Math.PI / 2;
-        if (p.x === -1 && p.z === 1) rotY = -Math.PI / 2;
-        if (p.x === -1 && p.z === -1) rotY = Math.PI;
-
-        // Patte inférieure
+        // Patte inférieure (Pliée vers l'intérieur de l'encuvement)
         const pInf = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
         pInf.rotation.z = Math.PI / 2;
-        pInf.rotation.y = rotY;
+        pInf.rotation.y = 0;
         pInf.position.set(xEnc - (longRetour / 2) * p.x, -totalH / 2 + 0.03, zEnc);
         addEdges(pInf);
         ancrageGroup.add(pInf);
 
-        // Crochet supérieur
+        // Crochet supérieur (Plié vers l'intérieur au niveau du sommet de l'encuvement)
         const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
         pSup.rotation.z = Math.PI / 2;
-        pSup.rotation.y = rotY;
+        pSup.rotation.y = 0;
         pSup.position.set(xEnc - (longRetour / 2) * p.x, -totalH / 2 + eRadier + hf - 0.02, zEnc);
         addEdges(pSup);
         ancrageGroup.add(pSup);
@@ -205,7 +199,7 @@ function addEdges(mesh) {
 
     // --- 8. FERRAILLAGE : CERCES DE COUTURE at DANS L'ENCUVEMENT (JAUNE VIF) ---
     for (let k = 0; k < nbCF; k++) {
-        const dimF = L_enc - 0.12; 
+        const dimF = L_enc - 0.12; // Ajusté pour rester confiné à l'intérieur du fût réduit
         const yF = -totalH / 2 + eRadier + (hf * (k + 1) / (nbCF + 1));
         const ptsF = [
             new THREE.Vector3(-dimF / 2, yF, -dimF / 2), 
@@ -220,7 +214,7 @@ function addEdges(mesh) {
     // --- 9. FERRAILLAGE : NAPPE INFÉRIEURE DU RADIER ---
     const bL = -totalH / 2;
     
-    // Nappe X 
+    // Nappe X (Ajustée à la largeur du radier L_radier)
     for (let i = 0; i < n1; i++) {
         const bX = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, L_radier - 0.1, 8), matOrange);
         bX.rotation.x = Math.PI / 2; 
@@ -229,7 +223,7 @@ function addEdges(mesh) {
         group.add(bX);
     }
     
-    // Nappe Y
+    // Nappe Y (Ajustée à la largeur du radier L_radier)
     for (let j = 0; j < n2; j++) {
         const bY = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, L_radier - 0.1, 8), 
             new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.8, roughness: 0.2 }) 
