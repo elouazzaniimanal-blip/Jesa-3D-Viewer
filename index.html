@@ -146,6 +146,43 @@ function addEdges(mesh) {
         group.add(bar);
     });
 
+    // --- AJOUT : ARMATURES EN U DANS LES 4 EXTRÉMITÉS DE L'ENCUVEMENT ---
+    const rBarreEnc = 0.012;
+    const longRetour = 0.16; // Longueur des retours horizontaux pliés
+    
+    posA.forEach(p => {
+        const ancrageGroup = new THREE.Group();
+        
+        // Positionnement précis juste à l'intérieur des parois externes de l'encuvement
+        const xEnc = ((L_enc / 2) - 0.05) * p.x;
+        const zEnc = ((L_enc / 2) - 0.05) * p.z;
+        
+        // Brin vertical (fait toute la hauteur du fût creux + ancrage dans le radier)
+        const hautBrin = hf + eRadier - 0.05;
+        const vBrin = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, hautBrin, 8), matBeigeAs);
+        vBrin.position.set(xEnc, (-totalH / 2) + (hautBrin / 2) + 0.02, zEnc);
+        addEdges(vBrin);
+        ancrageGroup.add(vBrin);
+
+        // Patte inférieure (Pliée vers l'intérieur de l'encuvement)
+        const pInf = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
+        pInf.rotation.z = Math.PI / 2;
+        pInf.rotation.y = (p.x === p.z) ? 0 : Math.PI / 2;
+        pInf.position.set(xEnc - (longRetour / 2) * p.x, -totalH / 2 + 0.03, zEnc);
+        addEdges(pInf);
+        ancrageGroup.add(pInf);
+
+        // Crochet supérieur (Plié vers l'intérieur au niveau du sommet de l'encuvement)
+        const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
+        pSup.rotation.z = Math.PI / 2;
+        pSup.rotation.y = (p.x === p.z) ? 0 : Math.PI / 2;
+        pSup.position.set(xEnc - (longRetour / 2) * p.x, -totalH / 2 + eRadier + hf - 0.02, zEnc);
+        addEdges(pSup);
+        ancrageGroup.add(pSup);
+
+        group.add(ancrageGroup);
+    });
+
     // --- 7. FERRAILLAGE : CADRES DU POTEAU (BEIGE OU STANDARD) ---
     for (let k = 0; k < 6; k++) {
         const yP = (poteau.position.y - hPV / 2) + (k * 0.25) + 0.1;
