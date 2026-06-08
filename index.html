@@ -195,22 +195,21 @@ function addEdges(mesh) {
             addEdges(vBrin);
             ancrageGroup.add(vBrin);
 
-            // Crochet supérieur en U jusqu'au milieu de l'armature
-            const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, posEnc, 8), matBeigeAs);
-            pSup.rotation.z = Math.PI / 2;
+            // Crochet supérieur (Plié vers l'intérieur au niveau du sommet de l'encuvement)
+            const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
+            pSup.rotation.x = Math.PI / 2;
             pSup.rotation.y = 0;
-            pSup.position.set(xEnc / 2, -totalH / 2 + eRadier + hf - 0.02, zEnc);
+            pSup.position.set(xEnc, -totalH / 2 + eRadier + hf - 0.02, zEnc - (longRetour / 2) * signe);
             addEdges(pSup);
             ancrageGroup.add(pSup);
-
-            // Patte inférieure en U jusqu'au milieu de l'armature
-            const pInf = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, posEnc, 8), matBeigeAs);
-            pInf.rotation.z = Math.PI / 2;
-            pInf.rotation.y = 0;
-            pInf.position.set(xEnc / 2, -totalH / 2 + 0.03, zEnc);
-            addEdges(pInf);
-            ancrageGroup.add(pInf);
         });
+
+        // Patte inférieure reliée en un seul trait avec l'armature en face
+        const pInf = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, L_enc - 0.10, 8), matBeigeAs);
+        pInf.rotation.z = Math.PI / 2;
+        pInf.position.set(0, -totalH / 2 + 0.03, posEnc * signe);
+        addEdges(pInf);
+        ancrageGroup.add(pInf);
 
         group.add(ancrageGroup);
     };
