@@ -148,7 +148,6 @@ function addEdges(mesh) {
 
     // --- AJOUT : ARMATURES EN U DANS LES 4 EXTRÉMITÉS DE L'ENCUVEMENT ---
     const rBarreEnc = 0.012;
-    const longRetour = 0.16; // Longueur des retours horizontaux pliés
     
     posA.forEach(p => {
         const ancrageGroup = new THREE.Group();
@@ -164,23 +163,25 @@ function addEdges(mesh) {
         addEdges(vBrin);
         ancrageGroup.add(vBrin);
 
-        // Patte inférieure (Pliée vers l'intérieur de l'encuvement)
-        const pInf = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
-        pInf.rotation.z = Math.PI / 2;
-        pInf.rotation.y = 0;
-        pInf.position.set(xEnc - (longRetour / 2) * p.x, -totalH / 2 + 0.03, zEnc);
-        addEdges(pInf);
-        ancrageGroup.add(pInf);
-
-        // Crochet supérieur (Plié vers l'intérieur au niveau du sommet de l'encuvement)
-        const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
-        pSup.rotation.z = Math.PI / 2;
-        pSup.rotation.y = 0;
-        pSup.position.set(xEnc - (longRetour / 2) * p.x, -totalH / 2 + eRadier + hf - 0.02, zEnc);
-        addEdges(pSup);
-        ancrageGroup.add(pSup);
-
         group.add(ancrageGroup);
+    });
+
+    // Pattes inférieures reliées en un seul trait avec les armatures en face
+    [-1, 1].forEach(z => {
+        const patteInf = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, L_enc - 0.10, 8), matBeigeAs);
+        patteInf.rotation.z = Math.PI / 2;
+        patteInf.position.set(0, -totalH / 2 + 0.03, ((L_enc / 2) - 0.05) * z);
+        addEdges(patteInf);
+        group.add(patteInf);
+    });
+
+    // Crochets supérieurs reliés en un seul trait avec les armatures en face
+    [-1, 1].forEach(z => {
+        const patteSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, L_enc - 0.10, 8), matBeigeAs);
+        patteSup.rotation.z = Math.PI / 2;
+        patteSup.position.set(0, -totalH / 2 + eRadier + hf - 0.02, ((L_enc / 2) - 0.05) * z);
+        addEdges(patteSup);
+        group.add(patteSup);
     });
 
     // --- 7. FERRAILLAGE : CADRES DU POTEAU (BEIGE OU STANDARD) ---
