@@ -149,39 +149,74 @@ function addEdges(mesh) {
     // --- AJOUT : ARMATURES EN U DANS LES 4 EXTRÉMITÉS DE L'ENCUVEMENT ---
     const rBarreEnc = 0.012;
     const longRetour = 0.16; // Longueur des retours horizontaux pliés
-    
-    posA.forEach(p => {
-        const ancrageGroup = new THREE.Group();
-        
-        // Positionnement précis juste à l'intérieur des parois externes de l'encuvement
-        const xEnc = ((L_enc / 2) - 0.05) * p.x;
-        const zEnc = ((L_enc / 2) - 0.05) * p.z;
-        
-        // Brin vertical (fait toute la hauteur du fût creux + ancrage dans le radier)
-        const hautBrin = hf + eRadier - 0.05;
-        const vBrin = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, hautBrin, 8), matBeigeAs);
-        vBrin.position.set(xEnc, (-totalH / 2) + (hautBrin / 2) + 0.02, zEnc);
-        addEdges(vBrin);
-        ancrageGroup.add(vBrin);
+    const posEnc = (L_enc / 2) - 0.05;
+    const hautBrin = hf + eRadier - 0.05;
 
-        // Crochet supérieur (Plié vers l'intérieur au niveau du sommet de l'encuvement)
-        const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
-        pSup.rotation.z = Math.PI / 2;
-        pSup.rotation.y = 0;
-        pSup.position.set(xEnc - (longRetour / 2) * p.x, -totalH / 2 + eRadier + hf - 0.02, zEnc);
-        addEdges(pSup);
-        ancrageGroup.add(pSup);
+    const facesEnc = [
+        { axe: 'x', signe: 1 },
+        { axe: 'x', signe: -1 },
+        { axe: 'z', signe: 1 },
+        { axe: 'z', signe: -1 }
+    ];
+
+    facesEnc.forEach(face => {
+        const ancrageGroup = new THREE.Group();
+
+        if (face.axe === 'x') {
+            [-1, 1].forEach(z => {
+                const xEnc = posEnc * face.signe;
+                const zEnc = posEnc * z;
+
+                const vBrin = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, hautBrin, 8), matBeigeAs);
+                vBrin.position.set(xEnc, (-totalH / 2) + (hautBrin / 2) + 0.02, zEnc);
+                addEdges(vBrin);
+                ancrageGroup.add(vBrin);
+
+                // Crochet supérieur (Plié vers l'intérieur au niveau du sommet de l'encuvement)
+                const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
+                pSup.rotation.z = Math.PI / 2;
+                pSup.rotation.y = 0;
+                pSup.position.set(xEnc - (longRetour / 2) * face.signe, -totalH / 2 + eRadier + hf - 0.02, zEnc);
+                addEdges(pSup);
+                ancrageGroup.add(pSup);
+            });
+
+            // Patte inférieure reliée en un seul trait avec l'armature en face
+            const pInf = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, L_enc - 0.10, 8), matBeigeAs);
+            pInf.rotation.x = Math.PI / 2;
+            pInf.position.set(posEnc * face.signe, -totalH / 2 + 0.03, 0);
+            addEdges(pInf);
+            ancrageGroup.add(pInf);
+        }
+
+        if (face.axe === 'z') {
+            [-1, 1].forEach(x => {
+                const xEnc = posEnc * x;
+                const zEnc = posEnc * face.signe;
+
+                const vBrin = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, hautBrin, 8), matBeigeAs);
+                vBrin.position.set(xEnc, (-totalH / 2) + (hautBrin / 2) + 0.02, zEnc);
+                addEdges(vBrin);
+                ancrageGroup.add(vBrin);
+
+                // Crochet supérieur (Plié vers l'intérieur au niveau du sommet de l'encuvement)
+                const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
+                pSup.rotation.x = Math.PI / 2;
+                pSup.rotation.y = 0;
+                pSup.position.set(xEnc, -totalH / 2 + eRadier + hf - 0.02, zEnc - (longRetour / 2) * face.signe);
+                addEdges(pSup);
+                ancrageGroup.add(pSup);
+            });
+
+            // Patte inférieure reliée en un seul trait avec l'armature en face
+            const pInf = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, L_enc - 0.10, 8), matBeigeAs);
+            pInf.rotation.z = Math.PI / 2;
+            pInf.position.set(0, -totalH / 2 + 0.03, posEnc * face.signe);
+            addEdges(pInf);
+            ancrageGroup.add(pInf);
+        }
 
         group.add(ancrageGroup);
-    });
-
-    // Pattes inférieures reliées en un seul trait avec les armatures en face
-    [-1, 1].forEach(z => {
-        const patteInf = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, L_enc - 0.10, 8), matBeigeAs);
-        patteInf.rotation.z = Math.PI / 2;
-        patteInf.position.set(0, -totalH / 2 + 0.03, ((L_enc / 2) - 0.05) * z);
-        addEdges(patteInf);
-        group.add(patteInf);
     });
 
     // --- 7. FERRAILLAGE : CADRES DU POTEAU (BEIGE OU STANDARD) ---
