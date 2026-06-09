@@ -32,9 +32,9 @@
             Date Coulage : <strong>14/05/2026</strong>
         </div>
         <div class="data-row"><span>Type de Structure</span><strong id="txt-type" style="color: #ff6b00;">---</strong></div>
-        <div class="data-row"><span id="lbl-n1">Cerces de couture</span><span id="v-as" class="val-green">---</span></div>
+        <div class="data-row"><span id="lbl-n1">Cadres inf. pied de poteau</span><span id="v-at" class="val-green">---</span></div>
         <div class="data-row"><span id="lbl-n2">Armatures d'angles</span><span id="v-ah" class="val">---</span></div>
-        <div class="data-row"><span>Cadres inf. pied poteau</span><span id="v-at" class="val-white">---</span></div>
+        <div class="data-row"><span id="lbl-n3">Cerces de couture</span><span id="v-as" class="val-white">---</span></div>
     </div>
 
 <script type="module">
@@ -83,9 +83,9 @@ const n1 = parseInt(p.get('n1')) || nCadresInf;
 const n2 = parseInt(p.get('n2')) || nCadresInf;
 const nbCF = parseInt(p.get('nbCF')) || nCerces;
 
-document.getElementById('v-as').innerText = cercesCoutureTxt;
-document.getElementById('v-ah').innerText = armaturesAnglesTxt;
 document.getElementById('v-at').innerText = cadresInfTxt;
+document.getElementById('v-ah').innerText = armaturesAnglesTxt;
+document.getElementById('v-as').innerText = cercesCoutureTxt;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.01, 1000);
@@ -114,8 +114,9 @@ function addEdges(mesh) {
 // --- INSERTION DE LA PARTIE SEMELLE À ENCUVEMENT ---
 {
     document.getElementById('txt-type').innerText = "SEMELLE À ENCUVEMENT";
-    document.getElementById('lbl-n1').innerText = "Cerces de couture";
+    document.getElementById('lbl-n1').innerText = "Cadres inf. pied de poteau";
     document.getElementById('lbl-n2').innerText = "Armatures d'angles";
+    document.getElementById('lbl-n3').innerText = "Cerces de couture";
 
     // --- 1. DÉFINITION DES MATÉRIAUX (COULEURS EXACTES DEMANDÉES) ---
     // Armatures longitudinales As en BEIGE
@@ -229,7 +230,7 @@ function addEdges(mesh) {
             ancrageGroup.add(vBrin);
 
             // Crochet supérieur (Plié vers l'intérieur au niveau du sommet de l'encuvement)
-            const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarEnc, longRetour, 8), matBeigeAs);
+            const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
             pSup.rotation.x = Math.PI / 2;
             pSup.rotation.y = 0;
             pSup.position.set(xEnc, -totalH / 2 + eRadier + hf - 0.02, zEnc - (longRetour / 2) * signe);
@@ -252,8 +253,8 @@ function addEdges(mesh) {
     ajouterEnsembleFaceZ(1);
     ajouterEnsembleFaceZ(-1);
 
-    // --- 7. FERRAILLAGE : CADRES DU POTEAU (BEIGE OU STANDARD) ---
-    for (let k = 0; k < nAngles; k++) {
+    // --- 7. FERRAILLAGE : CADRES INF. PIED DE POTEAU ---
+    for (let k = 0; k < nCadresInf; k++) {
         const yP = (poteau.position.y - hPV / 2) + (k * 0.25) + 0.1;
         const dim = poteauA - 0.06;
         const pts = [
