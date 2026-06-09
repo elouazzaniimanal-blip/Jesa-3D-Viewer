@@ -32,27 +32,60 @@
             Date Coulage : <strong>14/05/2026</strong>
         </div>
         <div class="data-row"><span>Type de Structure</span><strong id="txt-type" style="color: #ff6b00;">---</strong></div>
-        <div class="data-row"><span id="lbl-n1">Cadres supérieurs (Asup)</span><span id="v-as" class="val-green">---</span></div>
-        <div class="data-row"><span id="lbl-n2">Armatures d'angles (As)</span><span id="v-ah" class="val">---</span></div>
-        <div class="data-row"><span>Cerces (at)</span><span id="v-at" class="val-white">---</span></div>
+        <div class="data-row"><span id="lbl-n1">Cerces de couture</span><span id="v-as" class="val-green">---</span></div>
+        <div class="data-row"><span id="lbl-n2">Armatures d'angles</span><span id="v-ah" class="val">---</span></div>
+        <div class="data-row"><span>Cadres inf. pied poteau</span><span id="v-at" class="val-white">---</span></div>
     </div>
 
 <script type="module">
 import { ARButton } from 'https://unpkg.com/three@0.128.0/examples/jsm/webxr/ARButton.js';
 
 const p = new URLSearchParams(window.location.search);
+
 const decode = (s) => s ? decodeURIComponent(s.replace(/\+/g, ' ')).replace(/_/g, ' ') : null;
+
+const extractNb = (txt, fallback) => {
+    const decoded = decode(txt);
+    if (!decoded) return fallback;
+    const match = decoded.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : fallback;
+};
+
+const extractHA = (txt, fallback) => {
+    const decoded = decode(txt);
+    if (!decoded) return fallback;
+    const match = decoded.match(/HA\s*\d+/i);
+    return match ? match[0].toUpperCase().replace(/\s+/g, '') : fallback;
+};
 
 // Extraction des paramètres de l'URL
 const parts = (p.get('parts') || "0.40_0.30_0.40_0.40_0.30").split('_');
 const h = parseFloat(p.get('h')) || 0.80;
-const n1 = parseInt(p.get('n1')) || 8;
-const n2 = parseInt(p.get('n2')) || 8;
-const nbCF = parseInt(p.get('nbCF')) || 4;
 
-document.getElementById('v-as').innerText = (p.get('as') || "5.21") + " cm²";
-document.getElementById('v-ah').innerText = decode(p.get('n1')) || "8 HA12";
-document.getElementById('v-at').innerText = decode(p.get('at')) || "4 HA10";
+// Depuis WinSemelle QR :
+// as = armatures d'angles
+// ah = cerces de couture
+// at = cadres inf. pied poteau
+const armaturesAnglesTxt = decode(p.get('as')) || "4 HA12";
+const cercesCoutureTxt = decode(p.get('ah')) || "8 HA12";
+const cadresInfTxt = decode(p.get('at')) || "4 HA10";
+
+const nAngles = extractNb(p.get('as'), 4);
+const nCerces = extractNb(p.get('ah'), 8);
+const nCadresInf = extractNb(p.get('at'), 4);
+
+const haAngles = extractHA(p.get('as'), "HA12");
+const haCerces = extractHA(p.get('ah'), "HA12");
+const haCadresInf = extractHA(p.get('at'), "HA10");
+
+// Compatibilité si l'ancien viewer reçoit encore n1/n2/nbCF
+const n1 = parseInt(p.get('n1')) || nCadresInf;
+const n2 = parseInt(p.get('n2')) || nCadresInf;
+const nbCF = parseInt(p.get('nbCF')) || nCerces;
+
+document.getElementById('v-as').innerText = cercesCoutureTxt;
+document.getElementById('v-ah').innerText = armaturesAnglesTxt;
+document.getElementById('v-at').innerText = cadresInfTxt;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.01, 1000);
@@ -81,8 +114,8 @@ function addEdges(mesh) {
 // --- INSERTION DE LA PARTIE SEMELLE À ENCUVEMENT ---
 {
     document.getElementById('txt-type').innerText = "SEMELLE À ENCUVEMENT";
-    document.getElementById('lbl-n1').innerText = "Cadres supérieurs (Asup)";
-    document.getElementById('lbl-n2').innerText = "Armatures d'angles (As)";
+    document.getElementById('lbl-n1').innerText = "Cerces de couture";
+    document.getElementById('lbl-n2').innerText = "Armatures d'angles";
 
     // --- 1. DÉFINITION DES MATÉRIAUX (COULEURS EXACTES DEMANDÉES) ---
     // Armatures longitudinales As en BEIGE
@@ -196,7 +229,7 @@ function addEdges(mesh) {
             ancrageGroup.add(vBrin);
 
             // Crochet supérieur (Plié vers l'intérieur au niveau du sommet de l'encuvement)
-            const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
+            const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarEnc, longRetour, 8), matBeigeAs);
             pSup.rotation.x = Math.PI / 2;
             pSup.rotation.y = 0;
             pSup.position.set(xEnc, -totalH / 2 + eRadier + hf - 0.02, zEnc - (longRetour / 2) * signe);
@@ -220,7 +253,7 @@ function addEdges(mesh) {
     ajouterEnsembleFaceZ(-1);
 
     // --- 7. FERRAILLAGE : CADRES DU POTEAU (BEIGE OU STANDARD) ---
-    for (let k = 0; k < 6; k++) {
+    for (let k = 0; k < nAngles; k++) {
         const yP = (poteau.position.y - hPV / 2) + (k * 0.25) + 0.1;
         const dim = poteauA - 0.06;
         const pts = [
