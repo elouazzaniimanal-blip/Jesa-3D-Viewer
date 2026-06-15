@@ -157,7 +157,7 @@ function addEdges(mesh) {
     addEdges(poteau);
     group.add(poteau);
 
-    // --- 6. ARMATURES D'ANGLES SÉPARÉES AVEC CROCHETS EN U EN TÊTE ---
+    // --- 6. ARMATURES D'ANGLES : NOMBRE LIÉ À as ---
     const anglePositions = [
         { x: 1, z: 1 },
         { x: 1, z: -1 },
@@ -165,38 +165,87 @@ function addEdges(mesh) {
         { x: -1, z: -1 }
     ];
 
-    const rayonArmatureAngle = 0.012;
-    const espacementArmaturesAngle = 0.035;
-    const longueurCrochetU = 0.14;
-    const hauteurCrochetU = -totalH / 2 + eRadier + hf - 0.03;
-
-    const ajouterCrochetUEnTete = (x, z, sx, sz) => {
-        const p1 = new THREE.Vector3(x, hauteurCrochetU, z);
-        const p2 = new THREE.Vector3(x - longueurCrochetU * sx, hauteurCrochetU, z);
-        const p3 = new THREE.Vector3(x - longueurCrochetU * sx, hauteurCrochetU, z - longueurCrochetU * sz);
-        const p4 = new THREE.Vector3(x, hauteurCrochetU, z - longueurCrochetU * sz);
-
-        const curve = new THREE.CatmullRomCurve3([p1, p2, p3, p4]);
-        const hook = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, rayonArmatureAngle, 8, false), matBeigeAs);
-        addEdges(hook);
-        group.add(hook);
-    };
-
     for (let i = 0; i < nArmaturesAngles; i++) {
         const pos = anglePositions[i % anglePositions.length];
-        const rang = Math.floor(i / anglePositions.length);
-        const decalage = rang * espacementArmaturesAngle;
-
-        const xBarre = ((poteauA / 2) - 0.05 - decalage) * pos.x;
-        const zBarre = ((poteauA / 2) - 0.05 - decalage) * pos.z;
-
-        const bar = new THREE.Mesh(new THREE.CylinderGeometry(rayonArmatureAngle, rayonArmatureAngle, hPV + 0.2, 8), matBeigeAs);
-        bar.position.set(xBarre, poteau.position.y, zBarre);
+        const offsetRing = Math.floor(i / anglePositions.length) * 0.025;
+        const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, hPV + 0.2, 8), matBeigeAs);
+        bar.position.set(
+            ((poteauA / 2) - 0.05 - offsetRing) * pos.x,
+            poteau.position.y,
+            ((poteauA / 2) - 0.05 - offsetRing) * pos.z
+        );
         addEdges(bar);
         group.add(bar);
-
-        ajouterCrochetUEnTete(xBarre, zBarre, pos.x, pos.z);
     }
+
+    // --- AJOUT : ARMATURES EN U DANS LES 4 EXTRÉMITÉS DE L'ENCUVEMENT ---
+    const rBarreEnc = 0.012;
+    const longRetour = 0.16;
+    const posEnc = (L_enc / 2) - 0.05;
+    const hautBrin = hf + eRadier - 0.05;
+
+    const ajouterEnsembleFaceX = (signe) => {
+        const ancrageGroup = new THREE.Group();
+
+        [-1, 1].forEach(z => {
+            const xEnc = posEnc * signe;
+            const zEnc = posEnc * z;
+
+            const vBrin = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, hautBrin, 8), matBeigeAs);
+            vBrin.position.set(xEnc, (-totalH / 2) + (hautBrin / 2) + 0.02, zEnc);
+            addEdges(vBrin);
+            ancrageGroup.add(vBrin);
+
+            const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
+            pSup.rotation.z = Math.PI / 2;
+            pSup.rotation.y = 0;
+            pSup.position.set(xEnc - (longRetour / 2) * signe, -totalH / 2 + eRadier + hf - 0.02, zEnc);
+            addEdges(pSup);
+            ancrageGroup.add(pSup);
+        });
+
+        const pInf = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, L_enc - 0.10, 8), matBeigeAs);
+        pInf.rotation.x = Math.PI / 2;
+        pInf.position.set(posEnc * signe, -totalH / 2 + 0.03, 0);
+        addEdges(pInf);
+        ancrageGroup.add(pInf);
+
+        group.add(ancrageGroup);
+    };
+
+    const ajouterEnsembleFaceZ = (signe) => {
+        const ancrageGroup = new THREE.Group();
+
+        [-1, 1].forEach(x => {
+            const xEnc = posEnc * x;
+            const zEnc = posEnc * signe;
+
+            const vBrin = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, hautBrin, 8), matBeigeAs);
+            vBrin.position.set(xEnc, (-totalH / 2) + (hautBrin / 2) + 0.02, zEnc);
+            addEdges(vBrin);
+            ancrageGroup.add(vBrin);
+
+            const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
+            pSup.rotation.x = Math.PI / 2;
+            pSup.rotation.y = 0;
+            pSup.position.set(xEnc, -totalH / 2 + eRadier + hf - 0.02, zEnc - (longRetour / 2) * signe);
+            addEdges(pSup);
+            ancrageGroup.add(pSup);
+        });
+
+        const pInf = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, L_enc - 0.10, 8), matBeigeAs);
+        pInf.rotation.z = Math.PI / 2;
+        pInf.position.set(0, -totalH / 2 + 0.03, posEnc * signe);
+        addEdges(pInf);
+        ancrageGroup.add(pInf);
+
+        group.add(ancrageGroup);
+    };
+
+    ajouterEnsembleFaceX(1);
+    ajouterEnsembleFaceX(-1);
+    ajouterEnsembleFaceZ(1);
+    ajouterEnsembleFaceZ(-1);
 
     // --- 7. CADRES INF. PIED DE POTEAU : NOMBRE LIÉ À at ---
     for (let k = 0; k < nCadresInfPoteau; k++) {
