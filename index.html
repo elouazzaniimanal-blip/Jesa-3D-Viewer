@@ -101,27 +101,6 @@ function addEdges(mesh) {
     mesh.add(line);
 }
 
-// Fonction pour créer une barre cylindrique entre deux points
-function createBarBetween(p1, p2, radius, material) {
-    const dir = new THREE.Vector3().subVectors(p2, p1);
-    const length = dir.length();
-
-    const geom = new THREE.CylinderGeometry(radius, radius, length, 8);
-    const mesh = new THREE.Mesh(geom, material);
-
-    const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
-    mesh.position.copy(mid);
-
-    const quat = new THREE.Quaternion();
-    quat.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
-    mesh.quaternion.copy(quat);
-
-    addEdges(mesh);
-    group.add(mesh);
-
-    return mesh;
-}
-
 // --- INSERTION DE LA PARTIE SEMELLE À ENCUVEMENT ---
 {
     document.getElementById('txt-type').innerText = "SEMELLE À ENCUVEMENT";
@@ -129,10 +108,12 @@ function createBarBetween(p1, p2, radius, material) {
     document.getElementById('lbl-n2').innerText = "Armatures d'angles";
     document.getElementById('lbl-n3').innerText = "Cerces de couture";
 
+    // --- 1. DÉFINITION DES MATÉRIAUX (COULEURS EXACTES DEMANDÉES) ---
     const matBeigeAs = new THREE.MeshStandardMaterial({ color: 0xF5F5DC, metalness: 0.5, roughness: 0.3 });
     const matJauneVifAt = new THREE.MeshStandardMaterial({ color: 0xFFFF00, metalness: 0.3, roughness: 0.2 });
     const matLineJauneVif = new THREE.LineBasicMaterial({ color: 0xFFFF00, linewidth: 2 });
 
+    // --- 2. PARAMÈTRES GÉOMÉTRIQUES (AVEC DÉCROCHEMENT) ---
     const poteauA = parseFloat(parts[3]) || 0.40; 
     const eRadier = parseFloat(parts[4]) || 0.30; 
     
@@ -141,11 +122,13 @@ function createBarBetween(p1, p2, radius, material) {
     const hf = h;
     const totalH = hf + eRadier;
 
+    // --- 3. GÉOMÉTRIE : SOCLE / RADIER (BASE LARGE) ---
     const socle = new THREE.Mesh(new THREE.BoxGeometry(L_radier, eRadier, L_radier), matSocle);
     socle.position.y = -totalH / 2 + eRadier / 2;
     addEdges(socle);
     group.add(socle);
 
+    // --- 4. GÉOMÉTRIE : FÛT CREUX EXTÉRIEUR RÉDUIT ---
     const s = new THREE.Shape();
     s.moveTo(-L_enc / 2, -L_enc / 2); 
     s.lineTo(L_enc / 2, -L_enc / 2); 
@@ -167,13 +150,14 @@ function createBarBetween(p1, p2, radius, material) {
     addEdges(fut);
     group.add(fut);
 
+    // --- 5. GÉOMÉTRIE : POTEAU PRÉFABRIQUÉ DANS LA POCHE ---
     const hPV = hf + 0.8;
     const poteau = new THREE.Mesh(new THREE.BoxGeometry(poteauA - 0.04, hPV, poteauA - 0.04), matBlanc);
     poteau.position.y = -totalH / 2 + eRadier + hPV / 2 - 0.05;
     addEdges(poteau);
     group.add(poteau);
 
-    // --- ARMATURES D'ANGLES SÉPARÉES AVEC VRAIS CROCHETS EN U EN TÊTE ---
+    // --- 6. ARMATURES D'ANGLES : BARRES CONSERVÉES + PETITS CROCHETS U EN TÊTE ---
     const anglePositions = [
         { x: 1, z: 1 },
         { x: 1, z: -1 },
@@ -182,59 +166,39 @@ function createBarBetween(p1, p2, radius, material) {
     ];
 
     const rayonArmatureAngle = 0.012;
-    const espacementArmaturesAngle = 0.035;
-    const longueurU = 0.16;
-    const largeurU = 0.10;
-    const yBasAngle = poteau.position.y - hPV / 2 - 0.05;
-    const yHautAngle = poteau.position.y + hPV / 2 + 0.05;
+    const espacementArmaturesAngle = 0.025;
+    const longueurCrochetU = 0.08;
+    const largeurCrochetU = 0.05;
 
     for (let i = 0; i < nArmaturesAngles; i++) {
         const pos = anglePositions[i % anglePositions.length];
-        const rang = Math.floor(i / anglePositions.length);
-        const decalage = rang * espacementArmaturesAngle;
+        const offsetRing = Math.floor(i / anglePositions.length) * espacementArmaturesAngle;
 
-        const x1 = ((poteauA / 2) - 0.05 - decalage) * pos.x;
-        const z1 = ((poteauA / 2) - 0.05 - decalage) * pos.z;
+        const xBarre = ((poteauA / 2) - 0.05 - offsetRing) * pos.x;
+        const zBarre = ((poteauA / 2) - 0.05 - offsetRing) * pos.z;
 
-        const x2 = x1 - longueurU * pos.x;
-        const z2 = z1;
+        const bar = new THREE.Mesh(new THREE.CylinderGeometry(rayonArmatureAngle, rayonArmatureAngle, hPV + 0.2, 8), matBeigeAs);
+        bar.position.set(xBarre, poteau.position.y, zBarre);
+        addEdges(bar);
+        group.add(bar);
 
-        const x3 = x2;
-        const z3 = z1 - largeurU * pos.z;
+        const yHook = poteau.position.y + (hPV + 0.2) / 2;
 
-        const x4 = x1;
-        const z4 = z3;
+        const p1 = new THREE.Vector3(xBarre, yHook, zBarre);
+        const p2 = new THREE.Vector3(xBarre - longueurCrochetU * pos.x, yHook, zBarre);
+        const p3 = new THREE.Vector3(xBarre - longueurCrochetU * pos.x, yHook, zBarre - largeurCrochetU * pos.z);
+        const p4 = new THREE.Vector3(xBarre, yHook, zBarre - largeurCrochetU * pos.z);
 
-        createBarBetween(
-            new THREE.Vector3(x1, yBasAngle, z1),
-            new THREE.Vector3(x1, yHautAngle, z1),
-            rayonArmatureAngle,
+        const hookCurve = new THREE.CatmullRomCurve3([p1, p2, p3, p4]);
+        const hook = new THREE.Mesh(
+            new THREE.TubeGeometry(hookCurve, 12, rayonArmatureAngle, 8, false),
             matBeigeAs
         );
-
-        createBarBetween(
-            new THREE.Vector3(x1, yHautAngle, z1),
-            new THREE.Vector3(x2, yHautAngle, z2),
-            rayonArmatureAngle,
-            matBeigeAs
-        );
-
-        createBarBetween(
-            new THREE.Vector3(x2, yHautAngle, z2),
-            new THREE.Vector3(x3, yHautAngle, z3),
-            rayonArmatureAngle,
-            matBeigeAs
-        );
-
-        createBarBetween(
-            new THREE.Vector3(x3, yHautAngle, z3),
-            new THREE.Vector3(x4, yHautAngle, z4),
-            rayonArmatureAngle,
-            matBeigeAs
-        );
+        addEdges(hook);
+        group.add(hook);
     }
 
-    // --- CADRES INF. PIED DE POTEAU : NOMBRE LIÉ À at ---
+    // --- 7. CADRES INF. PIED DE POTEAU : NOMBRE LIÉ À at ---
     for (let k = 0; k < nCadresInfPoteau; k++) {
         const yP = (poteau.position.y - hPV / 2) + ((k + 1) * hPV / (nCadresInfPoteau + 1));
         const dim = poteauA - 0.06;
@@ -248,7 +212,7 @@ function createBarBetween(p1, p2, radius, material) {
         group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xF5F5DC })));
     }
 
-    // --- CERCES DE COUTURE : NOMBRE LIÉ À ah ---
+    // --- 8. CERCES DE COUTURE : NOMBRE LIÉ À ah ---
     for (let k = 0; k < nCercesCouture; k++) {
         const dimF = L_enc - 0.12;
         const yF = -totalH / 2 + eRadier + (hf * (k + 1) / (nCercesCouture + 1));
@@ -262,6 +226,7 @@ function createBarBetween(p1, p2, radius, material) {
         group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ptsF), matLineJauneVif));
     }
 
+    // --- 9. FERRAILLAGE : NAPPE INFÉRIEURE DU RADIER ---
     const bL = -totalH / 2;
     
     for (let i = 0; i < n1; i++) {
