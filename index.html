@@ -157,7 +157,7 @@ function addEdges(mesh) {
     addEdges(poteau);
     group.add(poteau);
 
-    // --- 6. ARMATURES D'ANGLES : BARRES CONSERVÉES + PETITS CROCHETS U EN TÊTE ---
+    // --- 6. ARMATURES D'ANGLES SÉPARÉES AVEC CROCHETS EN U EN TÊTE ---
     const anglePositions = [
         { x: 1, z: 1 },
         { x: 1, z: -1 },
@@ -166,36 +166,36 @@ function addEdges(mesh) {
     ];
 
     const rayonArmatureAngle = 0.012;
-    const espacementArmaturesAngle = 0.025;
-    const longueurCrochetU = 0.08;
-    const largeurCrochetU = 0.05;
+    const espacementArmaturesAngle = 0.035;
+    const longueurCrochetU = 0.14;
+    const hauteurCrochetU = -totalH / 2 + eRadier + hf - 0.03;
+
+    const ajouterCrochetUEnTete = (x, z, sx, sz) => {
+        const p1 = new THREE.Vector3(x, hauteurCrochetU, z);
+        const p2 = new THREE.Vector3(x - longueurCrochetU * sx, hauteurCrochetU, z);
+        const p3 = new THREE.Vector3(x - longueurCrochetU * sx, hauteurCrochetU, z - longueurCrochetU * sz);
+        const p4 = new THREE.Vector3(x, hauteurCrochetU, z - longueurCrochetU * sz);
+
+        const curve = new THREE.CatmullRomCurve3([p1, p2, p3, p4]);
+        const hook = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, rayonArmatureAngle, 8, false), matBeigeAs);
+        addEdges(hook);
+        group.add(hook);
+    };
 
     for (let i = 0; i < nArmaturesAngles; i++) {
         const pos = anglePositions[i % anglePositions.length];
-        const offsetRing = Math.floor(i / anglePositions.length) * espacementArmaturesAngle;
+        const rang = Math.floor(i / anglePositions.length);
+        const decalage = rang * espacementArmaturesAngle;
 
-        const xBarre = ((poteauA / 2) - 0.05 - offsetRing) * pos.x;
-        const zBarre = ((poteauA / 2) - 0.05 - offsetRing) * pos.z;
+        const xBarre = ((poteauA / 2) - 0.05 - decalage) * pos.x;
+        const zBarre = ((poteauA / 2) - 0.05 - decalage) * pos.z;
 
         const bar = new THREE.Mesh(new THREE.CylinderGeometry(rayonArmatureAngle, rayonArmatureAngle, hPV + 0.2, 8), matBeigeAs);
         bar.position.set(xBarre, poteau.position.y, zBarre);
         addEdges(bar);
         group.add(bar);
 
-        const yHook = poteau.position.y + (hPV + 0.2) / 2;
-
-        const p1 = new THREE.Vector3(xBarre, yHook, zBarre);
-        const p2 = new THREE.Vector3(xBarre - longueurCrochetU * pos.x, yHook, zBarre);
-        const p3 = new THREE.Vector3(xBarre - longueurCrochetU * pos.x, yHook, zBarre - largeurCrochetU * pos.z);
-        const p4 = new THREE.Vector3(xBarre, yHook, zBarre - largeurCrochetU * pos.z);
-
-        const hookCurve = new THREE.CatmullRomCurve3([p1, p2, p3, p4]);
-        const hook = new THREE.Mesh(
-            new THREE.TubeGeometry(hookCurve, 12, rayonArmatureAngle, 8, false),
-            matBeigeAs
-        );
-        addEdges(hook);
-        group.add(hook);
+        ajouterCrochetUEnTete(xBarre, zBarre, pos.x, pos.z);
     }
 
     // --- 7. CADRES INF. PIED DE POTEAU : NOMBRE LIÉ À at ---
