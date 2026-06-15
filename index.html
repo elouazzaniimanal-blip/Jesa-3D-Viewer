@@ -180,72 +180,57 @@ function addEdges(mesh) {
 
     // --- AJOUT : ARMATURES EN U DANS LES 4 EXTRÉMITÉS DE L'ENCUVEMENT ---
     const rBarreEnc = 0.012;
-    const longRetour = 0.16;
+    const longRetour = 0.14;
+    const ecartBarresAngle = 0.045;
     const posEnc = (L_enc / 2) - 0.05;
     const hautBrin = hf + eRadier - 0.05;
+    const yBasEnc = -totalH / 2 + 0.03;
+    const yHautEnc = -totalH / 2 + eRadier + hf - 0.02;
 
-    const ajouterEnsembleFaceX = (signe) => {
-        const ancrageGroup = new THREE.Group();
-
-        [-1, 1].forEach(z => {
-            const xEnc = posEnc * signe;
-            const zEnc = posEnc * z;
-
-            const vBrin = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, hautBrin, 8), matBeigeAs);
-            vBrin.position.set(xEnc, (-totalH / 2) + (hautBrin / 2) + 0.02, zEnc);
-            addEdges(vBrin);
-            ancrageGroup.add(vBrin);
-
-            const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
-            pSup.rotation.z = Math.PI / 2;
-            pSup.rotation.y = 0;
-            pSup.position.set(xEnc - (longRetour / 2) * signe, -totalH / 2 + eRadier + hf - 0.02, zEnc);
-            addEdges(pSup);
-            ancrageGroup.add(pSup);
-        });
-
-        const pInf = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, L_enc - 0.10, 8), matBeigeAs);
-        pInf.rotation.x = Math.PI / 2;
-        pInf.position.set(posEnc * signe, -totalH / 2 + 0.03, 0);
-        addEdges(pInf);
-        ancrageGroup.add(pInf);
-
-        group.add(ancrageGroup);
+    const creerBarreVerticale = (x, z) => {
+        const vBrin = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, hautBrin, 8), matBeigeAs);
+        vBrin.position.set(x, (-totalH / 2) + (hautBrin / 2) + 0.02, z);
+        addEdges(vBrin);
+        group.add(vBrin);
     };
 
-    const ajouterEnsembleFaceZ = (signe) => {
-        const ancrageGroup = new THREE.Group();
-
-        [-1, 1].forEach(x => {
-            const xEnc = posEnc * x;
-            const zEnc = posEnc * signe;
-
-            const vBrin = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, hautBrin, 8), matBeigeAs);
-            vBrin.position.set(xEnc, (-totalH / 2) + (hautBrin / 2) + 0.02, zEnc);
-            addEdges(vBrin);
-            ancrageGroup.add(vBrin);
-
-            const pSup = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
-            pSup.rotation.x = Math.PI / 2;
-            pSup.rotation.y = 0;
-            pSup.position.set(xEnc, -totalH / 2 + eRadier + hf - 0.02, zEnc - (longRetour / 2) * signe);
-            addEdges(pSup);
-            ancrageGroup.add(pSup);
-        });
-
-        const pInf = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, L_enc - 0.10, 8), matBeigeAs);
-        pInf.rotation.z = Math.PI / 2;
-        pInf.position.set(0, -totalH / 2 + 0.03, posEnc * signe);
-        addEdges(pInf);
-        ancrageGroup.add(pInf);
-
-        group.add(ancrageGroup);
+    const creerRetourHorizontalX = (x, z, signe) => {
+        const retour = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
+        retour.rotation.z = Math.PI / 2;
+        retour.position.set(x - (longRetour / 2) * signe, yHautEnc, z);
+        addEdges(retour);
+        group.add(retour);
     };
 
-    ajouterEnsembleFaceX(1);
-    ajouterEnsembleFaceX(-1);
-    ajouterEnsembleFaceZ(1);
-    ajouterEnsembleFaceZ(-1);
+    const creerRetourHorizontalZ = (x, z, signe) => {
+        const retour = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
+        retour.rotation.x = Math.PI / 2;
+        retour.position.set(x, yHautEnc, z - (longRetour / 2) * signe);
+        addEdges(retour);
+        group.add(retour);
+    };
+
+    const ajouterArmatureAngleU = (coinX, coinZ, indexDansCoin) => {
+        const decalage = indexDansCoin * ecartBarresAngle;
+
+        const xFaceX = (posEnc - decalage) * coinX;
+        const zFaceX = posEnc * coinZ;
+
+        const xFaceZ = posEnc * coinX;
+        const zFaceZ = (posEnc - decalage) * coinZ;
+
+        creerBarreVerticale(xFaceX, zFaceX);
+        creerRetourHorizontalX(xFaceX, zFaceX, coinX);
+
+        creerBarreVerticale(xFaceZ, zFaceZ);
+        creerRetourHorizontalZ(xFaceZ, zFaceZ, coinZ);
+    };
+
+    for (let i = 0; i < nArmaturesAngles; i++) {
+        const coin = anglePositions[i % 4];
+        const indexDansCoin = Math.floor(i / 4);
+        ajouterArmatureAngleU(coin.x, coin.z, indexDansCoin);
+    }
 
     // --- 7. CADRES INF. PIED DE POTEAU : NOMBRE LIÉ À at ---
     for (let k = 0; k < nCadresInfPoteau; k++) {
