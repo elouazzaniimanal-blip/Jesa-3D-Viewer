@@ -167,16 +167,24 @@ function addEdges(mesh) {
 
     const rayonArmatureAngle = 0.012;
     const espacementArmaturesAngle = 0.035;
-    const longueurCrochetU = 0.14;
-    const hauteurCrochetU = -totalH / 2 + eRadier + hf - 0.03;
+    const ouvertureU = 0.05; // Largeur du crochet en U
+    const longueurRetourU = 0.12; // Longueur de la patte de retour vers le bas
 
     const ajouterCrochetUEnTete = (x, z, sx, sz) => {
-        const p1 = new THREE.Vector3(x, hauteurCrochetU, z);
-        const p2 = new THREE.Vector3(x - longueurCrochetU * sx, hauteurCrochetU, z);
-        const p3 = new THREE.Vector3(x - longueurCrochetU * sx, hauteurCrochetU, z - longueurCrochetU * sz);
-        const p4 = new THREE.Vector3(x, hauteurCrochetU, z - longueurCrochetU * sz);
+        const hauteurTop = -totalH / 2 + eRadier + hf + 0.1; // Niveau haut de la barre droite
+        
+        // Tracé du crochet en U à 180° (Aller vers le haut -> courbe à 180° -> retour vers le bas)
+        const p1 = new THREE.Vector3(x, hauteurTop - 0.05, z);
+        const p2 = new THREE.Vector3(x, hauteurTop, z);
+        
+        // Sommet de la boucle (décalage progressif vers l'intérieur de la section)
+        const p3 = new THREE.Vector3(x - (ouvertureU / 2) * sx, hauteurTop + 0.04, z - (ouvertureU / 2) * sz);
+        const p4 = new THREE.Vector3(x - ouvertureU * sx, hauteurTop, z - ouvertureU * sz);
+        
+        // Patte de retour du U descendant vers le bas
+        const p5 = new THREE.Vector3(x - ouvertureU * sx, hauteurTop - longueurRetourU, z - ouvertureU * sz);
 
-        const curve = new THREE.CatmullRomCurve3([p1, p2, p3, p4]);
+        const curve = new THREE.CatmullRomCurve3([p1, p2, p3, p4, p5]);
         const hook = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, rayonArmatureAngle, 8, false), matBeigeAs);
         addEdges(hook);
         group.add(hook);
@@ -190,8 +198,13 @@ function addEdges(mesh) {
         const xBarre = ((poteauA / 2) - 0.05 - decalage) * pos.x;
         const zBarre = ((poteauA / 2) - 0.05 - decalage) * pos.z;
 
-        const bar = new THREE.Mesh(new THREE.CylinderGeometry(rayonArmatureAngle, rayonArmatureAngle, hPV + 0.2, 8), matBeigeAs);
-        bar.position.set(xBarre, poteau.position.y, zBarre);
+        // Corps principal droit de la barre arrêté juste avant le début de la courbure du U
+        const hauteurTopBarre = -totalH / 2 + eRadier + hf + 0.05;
+        const hauteurBaseBarre = poteau.position.y - hPV / 2;
+        const longueurBarreDroite = hauteurTopBarre - hauteurBaseBarre;
+
+        const bar = new THREE.Mesh(new THREE.CylinderGeometry(rayonArmatureAngle, rayonArmatureAngle, longueurBarreDroite, 8), matBeigeAs);
+        bar.position.set(xBarre, hauteurBaseBarre + longueurBarreDroite / 2, zBarre);
         addEdges(bar);
         group.add(bar);
 
