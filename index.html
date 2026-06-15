@@ -166,26 +166,24 @@ function addEdges(mesh) {
     ];
 
     const rayonArmatureAngle = 0.012;
-    const espacementArmaturesAngle = 0.035;
-    const ouvertureU = 0.05; // Largeur du crochet en U
-    const longueurRetourU = 0.12; // Longueur de la patte de retour vers le bas
+    const espacementArmaturesAngle = 0.04;
+    const ouvertureU = 0.06; // Écartement de la boucle du U
+    const longueurRetourU = 0.15; // Longueur de la patte qui redescend
 
-    const ajouterCrochetUEnTete = (x, z, sx, sz) => {
-        const hauteurTop = -totalH / 2 + eRadier + hf + 0.1; // Niveau haut de la barre droite
+    const ajouterCrochetUEnTete = (x, z, sx, sz, hauteurTopBarre) => {
+        // Le U commence au sommet de la barre verticale droite
+        const p1 = new THREE.Vector3(x, hauteurTopBarre, z);
+        const p2 = new THREE.Vector3(x, hauteurTopBarre + 0.08, z); // Montée
         
-        // Tracé du crochet en U à 180° (Aller vers le haut -> courbe à 180° -> retour vers le bas)
-        const p1 = new THREE.Vector3(x, hauteurTop - 0.05, z);
-        const p2 = new THREE.Vector3(x, hauteurTop, z);
+        // Courbure supérieure du U vers l'intérieur du poteau
+        const p3 = new THREE.Vector3(x - (ouvertureU / 2) * sx, hauteurTopBarre + 0.12, z - (ouvertureU / 2) * sz);
+        const p4 = new THREE.Vector3(x - ouvertureU * sx, hauteurTopBarre + 0.08, z - ouvertureU * sz);
         
-        // Sommet de la boucle (décalage progressif vers l'intérieur de la section)
-        const p3 = new THREE.Vector3(x - (ouvertureU / 2) * sx, hauteurTop + 0.04, z - (ouvertureU / 2) * sz);
-        const p4 = new THREE.Vector3(x - ouvertureU * sx, hauteurTop, z - ouvertureU * sz);
-        
-        // Patte de retour du U descendant vers le bas
-        const p5 = new THREE.Vector3(x - ouvertureU * sx, hauteurTop - longueurRetourU, z - ouvertureU * sz);
+        // Patte de retour droite qui descend
+        const p5 = new THREE.Vector3(x - ouvertureU * sx, hauteurTopBarre + 0.08 - longueurRetourU, z - ouvertureU * sz);
 
         const curve = new THREE.CatmullRomCurve3([p1, p2, p3, p4, p5]);
-        const hook = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, rayonArmatureAngle, 8, false), matBeigeAs);
+        const hook = new THREE.Mesh(new THREE.TubeGeometry(curve, 20, rayonArmatureAngle, 8, false), matBeigeAs);
         addEdges(hook);
         group.add(hook);
     };
@@ -195,12 +193,14 @@ function addEdges(mesh) {
         const rang = Math.floor(i / anglePositions.length);
         const decalage = rang * espacementArmaturesAngle;
 
-        const xBarre = ((poteauA / 2) - 0.05 - decalage) * pos.x;
-        const zBarre = ((poteauA / 2) - 0.05 - decalage) * pos.z;
+        // Légère augmentation des coordonnées pour sortir les barres du volume du poteau blanc
+        const xBarre = ((poteauA / 2) - 0.01 - decalage) * pos.x;
+        const zBarre = ((poteauA / 2) - 0.01 - decalage) * pos.z;
 
-        // Corps principal droit de la barre arrêté juste avant le début de la courbure du U
-        const hauteurTopBarre = -totalH / 2 + eRadier + hf + 0.05;
         const hauteurBaseBarre = poteau.position.y - hPV / 2;
+        const hauteurTopBarre = hauteurBaseBarre + hPV + 0.1; // Dépasse légèrement en tête du poteau
+
+        // Calcul précis de la longueur de la partie droite
         const longueurBarreDroite = hauteurTopBarre - hauteurBaseBarre;
 
         const bar = new THREE.Mesh(new THREE.CylinderGeometry(rayonArmatureAngle, rayonArmatureAngle, longueurBarreDroite, 8), matBeigeAs);
@@ -208,7 +208,8 @@ function addEdges(mesh) {
         addEdges(bar);
         group.add(bar);
 
-        ajouterCrochetUEnTete(xBarre, zBarre, pos.x, pos.z);
+        // Ajout du crochet à 180° au sommet exact de chaque barre
+        ajouterCrochetUEnTete(xBarre, zBarre, pos.x, pos.z, hauteurTopBarre);
     }
 
     // --- 7. CADRES INF. PIED DE POTEAU : NOMBRE LIÉ À at ---
