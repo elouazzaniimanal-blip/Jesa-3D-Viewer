@@ -101,6 +101,27 @@ function addEdges(mesh) {
     mesh.add(line);
 }
 
+// Fonction pour créer une barre cylindrique entre deux points
+function createBarBetween(p1, p2, radius, material) {
+    const dir = new THREE.Vector3().subVectors(p2, p1);
+    const length = dir.length();
+
+    const geom = new THREE.CylinderGeometry(radius, radius, length, 8);
+    const mesh = new THREE.Mesh(geom, material);
+
+    const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+    mesh.position.copy(mid);
+
+    const quat = new THREE.Quaternion();
+    quat.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+    mesh.quaternion.copy(quat);
+
+    addEdges(mesh);
+    group.add(mesh);
+
+    return mesh;
+}
+
 // --- INSERTION DE LA PARTIE SEMELLE À ENCUVEMENT ---
 {
     document.getElementById('txt-type').innerText = "SEMELLE À ENCUVEMENT";
@@ -108,12 +129,10 @@ function addEdges(mesh) {
     document.getElementById('lbl-n2').innerText = "Armatures d'angles";
     document.getElementById('lbl-n3').innerText = "Cerces de couture";
 
-    // --- 1. DÉFINITION DES MATÉRIAUX (COULEURS EXACTES DEMANDÉES) ---
     const matBeigeAs = new THREE.MeshStandardMaterial({ color: 0xF5F5DC, metalness: 0.5, roughness: 0.3 });
     const matJauneVifAt = new THREE.MeshStandardMaterial({ color: 0xFFFF00, metalness: 0.3, roughness: 0.2 });
     const matLineJauneVif = new THREE.LineBasicMaterial({ color: 0xFFFF00, linewidth: 2 });
 
-    // --- 2. PARAMÈTRES GÉOMÉTRIQUES (AVEC DÉCROCHEMENT) ---
     const poteauA = parseFloat(parts[3]) || 0.40; 
     const eRadier = parseFloat(parts[4]) || 0.30; 
     
@@ -122,13 +141,11 @@ function addEdges(mesh) {
     const hf = h;
     const totalH = hf + eRadier;
 
-    // --- 3. GÉOMÉTRIE : SOCLE / RADIER (BASE LARGE) ---
     const socle = new THREE.Mesh(new THREE.BoxGeometry(L_radier, eRadier, L_radier), matSocle);
     socle.position.y = -totalH / 2 + eRadier / 2;
     addEdges(socle);
     group.add(socle);
 
-    // --- 4. GÉOMÉTRIE : FÛT CREUX EXTÉRIEUR RÉDUIT ---
     const s = new THREE.Shape();
     s.moveTo(-L_enc / 2, -L_enc / 2); 
     s.lineTo(L_enc / 2, -L_enc / 2); 
@@ -150,14 +167,13 @@ function addEdges(mesh) {
     addEdges(fut);
     group.add(fut);
 
-    // --- 5. GÉOMÉTRIE : POTEAU PRÉFABRIQUÉ DANS LA POCHE ---
     const hPV = hf + 0.8;
     const poteau = new THREE.Mesh(new THREE.BoxGeometry(poteauA - 0.04, hPV, poteauA - 0.04), matBlanc);
     poteau.position.y = -totalH / 2 + eRadier + hPV / 2 - 0.05;
     addEdges(poteau);
     group.add(poteau);
 
-    // --- 6. ARMATURES D'ANGLES SÉPARÉES AVEC CROCHETS EN U EN TÊTE ---
+    // --- ARMATURES D'ANGLES SÉPARÉES AVEC VRAIS CROCHETS EN U EN TÊTE ---
     const anglePositions = [
         { x: 1, z: 1 },
         { x: 1, z: -1 },
@@ -166,53 +182,59 @@ function addEdges(mesh) {
     ];
 
     const rayonArmatureAngle = 0.012;
-    const espacementArmaturesAngle = 0.04;
-    const ouvertureU = 0.06; // Écartement de la boucle du U
-    const longueurRetourU = 0.15; // Longueur de la patte qui redescend
-
-    const ajouterCrochetUEnTete = (x, z, sx, sz, hauteurTopBarre) => {
-        // Le U commence au sommet de la barre verticale droite
-        const p1 = new THREE.Vector3(x, hauteurTopBarre, z);
-        const p2 = new THREE.Vector3(x, hauteurTopBarre + 0.08, z); // Montée
-        
-        // Courbure supérieure du U vers l'intérieur du poteau
-        const p3 = new THREE.Vector3(x - (ouvertureU / 2) * sx, hauteurTopBarre + 0.12, z - (ouvertureU / 2) * sz);
-        const p4 = new THREE.Vector3(x - ouvertureU * sx, hauteurTopBarre + 0.08, z - ouvertureU * sz);
-        
-        // Patte de retour droite qui descend
-        const p5 = new THREE.Vector3(x - ouvertureU * sx, hauteurTopBarre + 0.08 - longueurRetourU, z - ouvertureU * sz);
-
-        const curve = new THREE.CatmullRomCurve3([p1, p2, p3, p4, p5]);
-        const hook = new THREE.Mesh(new THREE.TubeGeometry(curve, 20, rayonArmatureAngle, 8, false), matBeigeAs);
-        addEdges(hook);
-        group.add(hook);
-    };
+    const espacementArmaturesAngle = 0.035;
+    const longueurU = 0.16;
+    const largeurU = 0.10;
+    const yBasAngle = poteau.position.y - hPV / 2 - 0.05;
+    const yHautAngle = poteau.position.y + hPV / 2 + 0.05;
 
     for (let i = 0; i < nArmaturesAngles; i++) {
         const pos = anglePositions[i % anglePositions.length];
         const rang = Math.floor(i / anglePositions.length);
         const decalage = rang * espacementArmaturesAngle;
 
-        // Légère augmentation des coordonnées pour sortir les barres du volume du poteau blanc
-        const xBarre = ((poteauA / 2) - 0.01 - decalage) * pos.x;
-        const zBarre = ((poteauA / 2) - 0.01 - decalage) * pos.z;
+        const x1 = ((poteauA / 2) - 0.05 - decalage) * pos.x;
+        const z1 = ((poteauA / 2) - 0.05 - decalage) * pos.z;
 
-        const hauteurBaseBarre = poteau.position.y - hPV / 2;
-        const hauteurTopBarre = hauteurBaseBarre + hPV + 0.1; // Dépasse légèrement en tête du poteau
+        const x2 = x1 - longueurU * pos.x;
+        const z2 = z1;
 
-        // Calcul précis de la longueur de la partie droite
-        const longueurBarreDroite = hauteurTopBarre - hauteurBaseBarre;
+        const x3 = x2;
+        const z3 = z1 - largeurU * pos.z;
 
-        const bar = new THREE.Mesh(new THREE.CylinderGeometry(rayonArmatureAngle, rayonArmatureAngle, longueurBarreDroite, 8), matBeigeAs);
-        bar.position.set(xBarre, hauteurBaseBarre + longueurBarreDroite / 2, zBarre);
-        addEdges(bar);
-        group.add(bar);
+        const x4 = x1;
+        const z4 = z3;
 
-        // Ajout du crochet à 180° au sommet exact de chaque barre
-        ajouterCrochetUEnTete(xBarre, zBarre, pos.x, pos.z, hauteurTopBarre);
+        createBarBetween(
+            new THREE.Vector3(x1, yBasAngle, z1),
+            new THREE.Vector3(x1, yHautAngle, z1),
+            rayonArmatureAngle,
+            matBeigeAs
+        );
+
+        createBarBetween(
+            new THREE.Vector3(x1, yHautAngle, z1),
+            new THREE.Vector3(x2, yHautAngle, z2),
+            rayonArmatureAngle,
+            matBeigeAs
+        );
+
+        createBarBetween(
+            new THREE.Vector3(x2, yHautAngle, z2),
+            new THREE.Vector3(x3, yHautAngle, z3),
+            rayonArmatureAngle,
+            matBeigeAs
+        );
+
+        createBarBetween(
+            new THREE.Vector3(x3, yHautAngle, z3),
+            new THREE.Vector3(x4, yHautAngle, z4),
+            rayonArmatureAngle,
+            matBeigeAs
+        );
     }
 
-    // --- 7. CADRES INF. PIED DE POTEAU : NOMBRE LIÉ À at ---
+    // --- CADRES INF. PIED DE POTEAU : NOMBRE LIÉ À at ---
     for (let k = 0; k < nCadresInfPoteau; k++) {
         const yP = (poteau.position.y - hPV / 2) + ((k + 1) * hPV / (nCadresInfPoteau + 1));
         const dim = poteauA - 0.06;
@@ -226,7 +248,7 @@ function addEdges(mesh) {
         group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xF5F5DC })));
     }
 
-    // --- 8. CERCES DE COUTURE : NOMBRE LIÉ À ah ---
+    // --- CERCES DE COUTURE : NOMBRE LIÉ À ah ---
     for (let k = 0; k < nCercesCouture; k++) {
         const dimF = L_enc - 0.12;
         const yF = -totalH / 2 + eRadier + (hf * (k + 1) / (nCercesCouture + 1));
@@ -240,7 +262,6 @@ function addEdges(mesh) {
         group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ptsF), matLineJauneVif));
     }
 
-    // --- 9. FERRAILLAGE : NAPPE INFÉRIEURE DU RADIER ---
     const bL = -totalH / 2;
     
     for (let i = 0; i < n1; i++) {
