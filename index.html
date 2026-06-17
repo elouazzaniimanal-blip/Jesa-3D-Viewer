@@ -120,7 +120,12 @@ function addEdges(mesh) {
     });
 
     const matLineJauneVif = new THREE.LineBasicMaterial({
-        color: 0xFFFF00,
+        color: 0xffffff,
+        linewidth: 2
+    });
+
+    const matCadresPiedPoteau = new THREE.LineBasicMaterial({
+        color: 0xb08d57,
         linewidth: 2
     });
 
@@ -346,7 +351,27 @@ function addEdges(mesh) {
         group.add(
             new THREE.Line(
                 new THREE.BufferGeometry().setFromPoints(pts),
-                new THREE.LineBasicMaterial({ color: 0xF5F5DC })
+                matCadresPiedPoteau
+            )
+        );
+    }
+
+    for (let k = 0; k < nCadresInfPoteau; k++) {
+        const yPied = -totalH / 2 + eRadier + ((k + 1) * 0.18 / (nCadresInfPoteau + 1));
+        const dimPied = poteauA + 0.10;
+
+        const ptsPied = [
+            new THREE.Vector3(-dimPied / 2, yPied, -dimPied / 2),
+            new THREE.Vector3(dimPied / 2, yPied, -dimPied / 2),
+            new THREE.Vector3(dimPied / 2, yPied, dimPied / 2),
+            new THREE.Vector3(-dimPied / 2, yPied, dimPied / 2),
+            new THREE.Vector3(-dimPied / 2, yPied, -dimPied / 2)
+        ];
+
+        group.add(
+            new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints(ptsPied),
+                matCadresPiedPoteau
             )
         );
     }
