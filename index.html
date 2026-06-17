@@ -178,7 +178,7 @@ function addEdges(mesh) {
         group.add(bar);
     }
 
-    // --- AJOUT : ARMATURES D'ANGLES EN U DANS LES 4 EXTRÉMITÉS DE L'ENCUVEMENT ---
+    // --- AJOUT : ARMATURES D'ANGLES SÉPARÉES EN U DANS LES 4 EXTRÉMITÉS DE L'ENCUVEMENT ---
     const rBarreEnc = 0.012;
     const longRetour = 0.14;
     const ecartBarresAngle = 0.045;
@@ -206,51 +206,45 @@ function addEdges(mesh) {
         group.add(tube);
     };
 
-    const creerArmatureAvecTeteX = (x, z, coinX) => {
+    const creerArmatureAvecTete = (x, z, coinX, coinZ, sensRetour) => {
         const pBas = new THREE.Vector3(x, yBasEnc, z);
         const pHaut = new THREE.Vector3(x, yHautEnc, z);
 
-        const pRetour = new THREE.Vector3(x - longRetour * coinX, yHautEnc, z);
-        const pDescente = new THREE.Vector3(x - longRetour * coinX, yMilieuCrochet, z);
+        let pRetour;
+        let pDescente;
+
+        if (sensRetour === "X") {
+            pRetour = new THREE.Vector3(x - longRetour * coinX, yHautEnc, z);
+            pDescente = new THREE.Vector3(x - longRetour * coinX, yMilieuCrochet, z);
+        } else {
+            pRetour = new THREE.Vector3(x, yHautEnc, z - longRetour * coinZ);
+            pDescente = new THREE.Vector3(x, yMilieuCrochet, z - longRetour * coinZ);
+        }
 
         creerTubeEntreDeuxPoints(pBas, pHaut);
         creerTubeEntreDeuxPoints(pHaut, pRetour);
         creerTubeEntreDeuxPoints(pRetour, pDescente);
     };
 
-    const creerArmatureAvecTeteZ = (x, z, coinZ) => {
-        const pBas = new THREE.Vector3(x, yBasEnc, z);
-        const pHaut = new THREE.Vector3(x, yHautEnc, z);
-
-        const pRetour = new THREE.Vector3(x, yHautEnc, z - longRetour * coinZ);
-        const pDescente = new THREE.Vector3(x, yMilieuCrochet, z - longRetour * coinZ);
-
-        creerTubeEntreDeuxPoints(pBas, pHaut);
-        creerTubeEntreDeuxPoints(pHaut, pRetour);
-        creerTubeEntreDeuxPoints(pRetour, pDescente);
-    };
-
-    const ajouterArmaturesDansCoin = (coinX, coinZ, nombreParCoin) => {
-        for (let i = 0; i < nombreParCoin; i++) {
+    const ajouterArmaturesSepareesDansCoin = (coinX, coinZ) => {
+        for (let i = 0; i < nArmaturesAngles; i++) {
             const decalage = i * ecartBarresAngle;
 
-            const xFaceX = (posEnc - decalage) * coinX;
-            const zFaceX = posEnc * coinZ;
+            const x1 = (posEnc - decalage) * coinX;
+            const z1 = posEnc * coinZ;
 
-            const xFaceZ = posEnc * coinX;
-            const zFaceZ = (posEnc - decalage) * coinZ;
+            const x2 = posEnc * coinX;
+            const z2 = (posEnc - decalage) * coinZ;
 
-            creerArmatureAvecTeteX(xFaceX, zFaceX, coinX);
-            creerArmatureAvecTeteZ(xFaceZ, zFaceZ, coinZ);
+            creerArmatureAvecTete(x1, z1, coinX, coinZ, "X");
+            creerArmatureAvecTete(x2, z2, coinX, coinZ, "Z");
         }
     };
 
-    const nombreParCoin = Math.max(1, Math.ceil(nArmaturesAngles / 4));
-
-    ajouterArmaturesDansCoin(1, 1, nombreParCoin);
-    ajouterArmaturesDansCoin(1, -1, nombreParCoin);
-    ajouterArmaturesDansCoin(-1, 1, nombreParCoin);
-    ajouterArmaturesDansCoin(-1, -1, nombreParCoin);
+    ajouterArmaturesSepareesDansCoin(1, 1);
+    ajouterArmaturesSepareesDansCoin(1, -1);
+    ajouterArmaturesSepareesDansCoin(-1, 1);
+    ajouterArmaturesSepareesDansCoin(-1, -1);
 
     // --- 7. CADRES INF. PIED DE POTEAU : NOMBRE LIÉ À at ---
     for (let k = 0; k < nCadresInfPoteau; k++) {
