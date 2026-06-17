@@ -178,13 +178,12 @@ function addEdges(mesh) {
         group.add(bar);
     }
 
-    // --- AJOUT : 2 ARMATURES D'ANGLES PAR COIN AVEC UNE SEULE TÊTE COMMUNE ---
+    // --- CORRECTION : 2 ARMATURES INDÉPENDANTES PAR COIN (UNE SEULE TÊTE INDIVIDUELLE PAR BARRE) ---
     const rBarreEnc = 0.012;
     const posEnc = (L_enc / 2) - 0.05;
     const ecartDeuxBarres = 0.12;
     const yBasEnc = -totalH / 2 + 0.03;
     const yHautEnc = -totalH / 2 + eRadier + hf - 0.02;
-    const yMilieuCrochet = (yBasEnc + yHautEnc) / 2;
 
     const creerTubeEntreDeuxPoints = (p1, p2) => {
         const direction = new THREE.Vector3().subVectors(p2, p1);
@@ -212,19 +211,15 @@ function addEdges(mesh) {
         const x2 = (posEnc - ecartDeuxBarres) * coinX;
         const z2 = posEnc * coinZ;
 
+        // Première barre d'angle droite (propre, de bas en haut, une seule tête)
         const p1Bas = new THREE.Vector3(x1, yBasEnc, z1);
         const p1Haut = new THREE.Vector3(x1, yHautEnc, z1);
+        creerTubeEntreDeuxPoints(p1Bas, p1Haut);
 
+        // Deuxième barre d'angle droite juxtaposée (propre, de bas en haut, une seule tête)
         const p2Bas = new THREE.Vector3(x2, yBasEnc, z2);
         const p2Haut = new THREE.Vector3(x2, yHautEnc, z2);
-
-        const pDescente = new THREE.Vector3(x2, yMilieuCrochet, z2);
-
-        creerTubeEntreDeuxPoints(p1Bas, p1Haut);
         creerTubeEntreDeuxPoints(p2Bas, p2Haut);
-
-        creerTubeEntreDeuxPoints(p1Haut, p2Haut);
-        creerTubeEntreDeuxPoints(p2Haut, pDescente);
     };
 
     ajouterDeuxArmaturesUneTeteDansCoin(1, 1);
