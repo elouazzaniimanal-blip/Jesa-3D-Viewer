@@ -383,7 +383,7 @@ function addEdges(mesh) {
 
     for (let k = 0; k < nCadresInfPoteau; k++) {
         const yPied = -totalH / 2 + eRadier + 0.04 + ((k + 1) * 0.22 / (nCadresInfPoteau + 1));
-        const dimPied = poteauA - 0.02;
+        const dimPied = poteauA + 0.04;
 
         const ptsPied = [
             new THREE.Vector3(-dimPied / 2, yPied, -dimPied / 2),
