@@ -178,11 +178,10 @@ function addEdges(mesh) {
         group.add(bar);
     }
 
-    // --- AJOUT : ARMATURES D'ANGLES EN U DANS LES 4 EXTRÉMITÉS DE L'ENCUVEMENT ---
+    // --- AJOUT : 2 ARMATURES D'ANGLES PAR COIN AVEC UNE SEULE TÊTE COMMUNE ---
     const rBarreEnc = 0.012;
-    const longRetour = 0.14;
-    const ecartBarresAngle = 0.045;
     const posEnc = (L_enc / 2) - 0.05;
+    const ecartDeuxBarres = 0.12;
     const yBasEnc = -totalH / 2 + 0.03;
     const yHautEnc = -totalH / 2 + eRadier + hf - 0.02;
     const yMilieuCrochet = (yBasEnc + yHautEnc) / 2;
@@ -206,51 +205,32 @@ function addEdges(mesh) {
         group.add(tube);
     };
 
-    const creerArmatureAvecTeteX = (x, z, coinX) => {
-        const pBas = new THREE.Vector3(x, yBasEnc, z);
-        const pHaut = new THREE.Vector3(x, yHautEnc, z);
+    const ajouterDeuxArmaturesUneTeteDansCoin = (coinX, coinZ) => {
+        const x1 = posEnc * coinX;
+        const z1 = posEnc * coinZ;
 
-        const pRetour = new THREE.Vector3(x - longRetour * coinX, yHautEnc, z);
-        const pDescente = new THREE.Vector3(x - longRetour * coinX, yMilieuCrochet, z);
+        const x2 = (posEnc - ecartDeuxBarres) * coinX;
+        const z2 = posEnc * coinZ;
 
-        creerTubeEntreDeuxPoints(pBas, pHaut);
-        creerTubeEntreDeuxPoints(pHaut, pRetour);
-        creerTubeEntreDeuxPoints(pRetour, pDescente);
+        const p1Bas = new THREE.Vector3(x1, yBasEnc, z1);
+        const p1Haut = new THREE.Vector3(x1, yHautEnc, z1);
+
+        const p2Bas = new THREE.Vector3(x2, yBasEnc, z2);
+        const p2Haut = new THREE.Vector3(x2, yHautEnc, z2);
+
+        const pDescente = new THREE.Vector3(x2, yMilieuCrochet, z2);
+
+        creerTubeEntreDeuxPoints(p1Bas, p1Haut);
+        creerTubeEntreDeuxPoints(p2Bas, p2Haut);
+
+        creerTubeEntreDeuxPoints(p1Haut, p2Haut);
+        creerTubeEntreDeuxPoints(p2Haut, pDescente);
     };
 
-    const creerArmatureAvecTeteZ = (x, z, coinZ) => {
-        const pBas = new THREE.Vector3(x, yBasEnc, z);
-        const pHaut = new THREE.Vector3(x, yHautEnc, z);
-
-        const pRetour = new THREE.Vector3(x, yHautEnc, z - longRetour * coinZ);
-        const pDescente = new THREE.Vector3(x, yMilieuCrochet, z - longRetour * coinZ);
-
-        creerTubeEntreDeuxPoints(pBas, pHaut);
-        creerTubeEntreDeuxPoints(pHaut, pRetour);
-        creerTubeEntreDeuxPoints(pRetour, pDescente);
-    };
-
-    const ajouterArmaturesDansCoin = (coinX, coinZ, nombreParCoin) => {
-        for (let i = 0; i < nombreParCoin; i++) {
-            const decalage = i * ecartBarresAngle;
-
-            const xFaceX = (posEnc - decalage) * coinX;
-            const zFaceX = posEnc * coinZ;
-
-            const xFaceZ = posEnc * coinX;
-            const zFaceZ = (posEnc - decalage) * coinZ;
-
-            creerArmatureAvecTeteX(xFaceX, zFaceX, coinX);
-            creerArmatureAvecTeteZ(xFaceZ, zFaceZ, coinZ);
-        }
-    };
-
-    const nombreParCoin = Math.max(1, Math.ceil(nArmaturesAngles / 4));
-
-    ajouterArmaturesDansCoin(1, 1, nombreParCoin);
-    ajouterArmaturesDansCoin(1, -1, nombreParCoin);
-    ajouterArmaturesDansCoin(-1, 1, nombreParCoin);
-    ajouterArmaturesDansCoin(-1, -1, nombreParCoin);
+    ajouterDeuxArmaturesUneTeteDansCoin(1, 1);
+    ajouterDeuxArmaturesUneTeteDansCoin(1, -1);
+    ajouterDeuxArmaturesUneTeteDansCoin(-1, 1);
+    ajouterDeuxArmaturesUneTeteDansCoin(-1, -1);
 
     // --- 7. CADRES INF. PIED DE POTEAU : NOMBRE LIÉ À at ---
     for (let k = 0; k < nCadresInfPoteau; k++) {
