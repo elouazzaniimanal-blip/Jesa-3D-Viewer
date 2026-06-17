@@ -178,7 +178,7 @@ function addEdges(mesh) {
         group.add(bar);
     }
 
-    // --- CORRECTION : 2 ARMATURES D'ANGLES D'ENCUVEMENT PAR COIN AVEC TÊTES EN U SUIVANT LEUR SENS ---
+    // --- CORRECTION : 2 ARMATURES D'ANGLES D'ENCUVEMENT PAR COIN AVEC TÊTES VERS LE COIN OPPOSÉ ---
     const rBarreEnc = 0.012;
     const posEnc = (L_enc / 2) - 0.05;
     const ecartDeuxBarres = 0.12;
@@ -206,20 +206,12 @@ function addEdges(mesh) {
         group.add(tube);
     };
 
-    const creerBarreAngleAvecTeteU = (x, z, coinX, coinZ, directionRetour) => {
+    const creerBarreAngleAvecTeteU = (x, z, coinX, coinZ) => {
         const pBas = new THREE.Vector3(x, yBasEnc, z);
         const pHaut = new THREE.Vector3(x, yHautEnc, z);
 
-        let pRetour;
-        let pDescente;
-
-        if (directionRetour === "X") {
-            pRetour = new THREE.Vector3(x - longueurTeteU * coinX, yHautEnc, z);
-            pDescente = new THREE.Vector3(x - longueurTeteU * coinX, yHautEnc - descenteTeteU, z);
-        } else {
-            pRetour = new THREE.Vector3(x, yHautEnc, z - longueurTeteU * coinZ);
-            pDescente = new THREE.Vector3(x, yHautEnc - descenteTeteU, z - longueurTeteU * coinZ);
-        }
+        const pRetour = new THREE.Vector3(x - longueurTeteU * coinX, yHautEnc, z - longueurTeteU * coinZ);
+        const pDescente = new THREE.Vector3(x - longueurTeteU * coinX, yHautEnc - descenteTeteU, z - longueurTeteU * coinZ);
 
         creerTubeEntreDeuxPoints(pBas, pHaut);
         creerTubeEntreDeuxPoints(pHaut, pRetour);
@@ -233,8 +225,8 @@ function addEdges(mesh) {
         const x2 = (posEnc - ecartDeuxBarres) * coinX;
         const z2 = posEnc * coinZ;
 
-        creerBarreAngleAvecTeteU(x1, z1, coinX, coinZ, "X");
-        creerBarreAngleAvecTeteU(x2, z2, coinX, coinZ, "X");
+        creerBarreAngleAvecTeteU(x1, z1, coinX, coinZ);
+        creerBarreAngleAvecTeteU(x2, z2, coinX, coinZ);
     };
 
     ajouterDeuxArmaturesAvecTetesUDansCoin(1, 1);
