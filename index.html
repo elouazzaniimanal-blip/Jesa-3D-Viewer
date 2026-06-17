@@ -51,17 +51,24 @@ const extractNb = (txt, fallback) => {
     return match ? parseInt(match[1], 10) : fallback;
 };
 
+// Extraction des paramètres de l'URL
 const parts = (p.get('parts') || "0.40_0.30_0.40_0.40_0.30").split('_');
 const h = parseFloat(p.get('h')) || 0.80;
 
+// Depuis WinSemelle QR :
+// as = armatures d'angles
+// ah = cerces de couture
+// at = cadres inf. pied poteau
 const armaturesAnglesTxt = decode(p.get('as')) || "4 HA12";
 const cercesCoutureTxt = decode(p.get('ah')) || "8 HA12";
 const cadresInfTxt = decode(p.get('at')) || "4 HA10";
 
+// Nombres réellement utilisés dans le modèle 3D
 const nArmaturesAngles = extractNb(p.get('as'), 4);
 const nCercesCouture = extractNb(p.get('ah'), 8);
 const nCadresInfPoteau = extractNb(p.get('at'), 4);
 
+// Compatibilité anciens paramètres
 const n1 = parseInt(p.get('n1')) || nCadresInfPoteau;
 const n2 = parseInt(p.get('n2')) || nCadresInfPoteau;
 const nbCF = parseInt(p.get('nbCF')) || nCercesCouture;
@@ -81,27 +88,32 @@ document.body.appendChild(ARButton.createButton(renderer));
 const group = new THREE.Group();
 scene.add(group);
 
+// Matériaux globaux requis pour la structure
 const matSocle = new THREE.MeshStandardMaterial({ color: 0x666666, transparent: true, opacity: 0.4 });
 const matBeton = new THREE.MeshStandardMaterial({ color: 0x888888, transparent: true, opacity: 0.3 });
 const matBlanc = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.5 });
 const matOrange = new THREE.MeshStandardMaterial({ color: 0xff6b00, metalness: 0.5 });
 
+// Fonction utilitaire pour dessiner les arêtes des éléments 3D
 function addEdges(mesh) {
     const edges = new THREE.EdgesGeometry(mesh.geometry);
     const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.4, transparent: true }));
     mesh.add(line);
 }
 
+// --- INSERTION DE LA PARTIE SEMELLE À ENCUVEMENT ---
 {
     document.getElementById('txt-type').innerText = "SEMELLE À ENCUVEMENT";
     document.getElementById('lbl-n1').innerText = "Cadres inf. pied poteau";
     document.getElementById('lbl-n2').innerText = "Armatures d'angles";
     document.getElementById('lbl-n3').innerText = "Cerces de couture";
 
+    // --- 1. DÉFINITION DES MATÉRIAUX (COULEURS EXACTES DEMANDÉES) ---
     const matBeigeAs = new THREE.MeshStandardMaterial({ color: 0xF5F5DC, metalness: 0.5, roughness: 0.3 });
     const matJauneVifAt = new THREE.MeshStandardMaterial({ color: 0xFFFF00, metalness: 0.3, roughness: 0.2 });
     const matLineJauneVif = new THREE.LineBasicMaterial({ color: 0xFFFF00, linewidth: 2 });
 
+    // --- 2. PARAMÈTRES GÉOMÉTRIQUES (AVEC DÉCROCHEMENT) ---
     const poteauA = parseFloat(parts[3]) || 0.40; 
     const eRadier = parseFloat(parts[4]) || 0.30; 
     
@@ -110,11 +122,13 @@ function addEdges(mesh) {
     const hf = h;
     const totalH = hf + eRadier;
 
+    // --- 3. GÉOMÉTRIE : SOCLE / RADIER (BASE LARGE) ---
     const socle = new THREE.Mesh(new THREE.BoxGeometry(L_radier, eRadier, L_radier), matSocle);
     socle.position.y = -totalH / 2 + eRadier / 2;
     addEdges(socle);
     group.add(socle);
 
+    // --- 4. GÉOMÉTRIE : FÛT CREUX EXTÉRIEUR RÉDUIT ---
     const s = new THREE.Shape();
     s.moveTo(-L_enc / 2, -L_enc / 2); 
     s.lineTo(L_enc / 2, -L_enc / 2); 
@@ -136,12 +150,14 @@ function addEdges(mesh) {
     addEdges(fut);
     group.add(fut);
 
+    // --- 5. GÉOMÉTRIE : POTEAU PRÉFABRIQUÉ DANS LA POCHE ---
     const hPV = hf + 0.8;
     const poteau = new THREE.Mesh(new THREE.BoxGeometry(poteauA - 0.04, hPV, poteauA - 0.04), matBlanc);
     poteau.position.y = -totalH / 2 + eRadier + hPV / 2 - 0.05;
     addEdges(poteau);
     group.add(poteau);
 
+    // --- 6. ARMATURES D'ANGLES : NOMBRE LIÉ À as ---
     const anglePositions = [
         { x: 1, z: 1 },
         { x: 1, z: -1 },
@@ -162,11 +178,11 @@ function addEdges(mesh) {
         group.add(bar);
     }
 
+    // --- AJOUT : ARMATURES D'ANGLES EN U DANS LES 4 EXTRÉMITÉS DE L'ENCUVEMENT ---
     const rBarreEnc = 0.012;
     const longRetour = 0.14;
     const ecartBarresAngle = 0.045;
     const posEnc = (L_enc / 2) - 0.05;
-    const hautBrin = hf + eRadier - 0.05;
     const yBasEnc = -totalH / 2 + 0.03;
     const yHautEnc = -totalH / 2 + eRadier + hf - 0.02;
     const yMilieuCrochet = (yBasEnc + yHautEnc) / 2;
@@ -174,59 +190,69 @@ function addEdges(mesh) {
     const creerTubeEntreDeuxPoints = (p1, p2) => {
         const direction = new THREE.Vector3().subVectors(p2, p1);
         const longueur = direction.length();
-        const tube = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longueur, 8), matBeigeAs);
+
+        const tube = new THREE.Mesh(
+            new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longueur, 8),
+            matBeigeAs
+        );
+
         tube.position.copy(new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5));
-        tube.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.clone().normalize());
+        tube.quaternion.setFromUnitVectors(
+            new THREE.Vector3(0, 1, 0),
+            direction.clone().normalize()
+        );
+
         addEdges(tube);
         group.add(tube);
     };
 
-    const creerBarreVerticale = (x, z) => {
+    const creerArmatureAvecTeteX = (x, z, coinX) => {
         const pBas = new THREE.Vector3(x, yBasEnc, z);
         const pHaut = new THREE.Vector3(x, yHautEnc, z);
+
+        const pRetour = new THREE.Vector3(x - longRetour * coinX, yHautEnc, z);
+        const pDescente = new THREE.Vector3(x - longRetour * coinX, yMilieuCrochet, z);
+
         creerTubeEntreDeuxPoints(pBas, pHaut);
+        creerTubeEntreDeuxPoints(pHaut, pRetour);
+        creerTubeEntreDeuxPoints(pRetour, pDescente);
     };
 
-    const creerCrochetEnTeteAvecRetourVerticalMilieu = (x, z, coinX, coinZ, orientation) => {
-        const p1 = new THREE.Vector3(x, yHautEnc, z);
+    const creerArmatureAvecTeteZ = (x, z, coinZ) => {
+        const pBas = new THREE.Vector3(x, yBasEnc, z);
+        const pHaut = new THREE.Vector3(x, yHautEnc, z);
 
-        let p2;
-        let p3;
+        const pRetour = new THREE.Vector3(x, yHautEnc, z - longRetour * coinZ);
+        const pDescente = new THREE.Vector3(x, yMilieuCrochet, z - longRetour * coinZ);
 
-        if (orientation === "X") {
-            p2 = new THREE.Vector3(x - longRetour * coinX, yHautEnc, z);
-            p3 = new THREE.Vector3(x - longRetour * coinX, yMilieuCrochet, z);
-        } else {
-            p2 = new THREE.Vector3(x, yHautEnc, z - longRetour * coinZ);
-            p3 = new THREE.Vector3(x, yMilieuCrochet, z - longRetour * coinZ);
+        creerTubeEntreDeuxPoints(pBas, pHaut);
+        creerTubeEntreDeuxPoints(pHaut, pRetour);
+        creerTubeEntreDeuxPoints(pRetour, pDescente);
+    };
+
+    const ajouterArmaturesDansCoin = (coinX, coinZ, nombreParCoin) => {
+        for (let i = 0; i < nombreParCoin; i++) {
+            const decalage = i * ecartBarresAngle;
+
+            const xFaceX = (posEnc - decalage) * coinX;
+            const zFaceX = posEnc * coinZ;
+
+            const xFaceZ = posEnc * coinX;
+            const zFaceZ = (posEnc - decalage) * coinZ;
+
+            creerArmatureAvecTeteX(xFaceX, zFaceX, coinX);
+            creerArmatureAvecTeteZ(xFaceZ, zFaceZ, coinZ);
         }
-
-        creerTubeEntreDeuxPoints(p1, p2);
-        creerTubeEntreDeuxPoints(p2, p3);
     };
 
-    const ajouterArmatureAngleU = (coinX, coinZ, indexDansCoin) => {
-        const decalage = indexDansCoin * ecartBarresAngle;
+    const nombreParCoin = Math.max(1, Math.ceil(nArmaturesAngles / 4));
 
-        const xFaceX = (posEnc - decalage) * coinX;
-        const zFaceX = posEnc * coinZ;
+    ajouterArmaturesDansCoin(1, 1, nombreParCoin);
+    ajouterArmaturesDansCoin(1, -1, nombreParCoin);
+    ajouterArmaturesDansCoin(-1, 1, nombreParCoin);
+    ajouterArmaturesDansCoin(-1, -1, nombreParCoin);
 
-        const xFaceZ = posEnc * coinX;
-        const zFaceZ = (posEnc - decalage) * coinZ;
-
-        creerBarreVerticale(xFaceX, zFaceX);
-        creerCrochetEnTeteAvecRetourVerticalMilieu(xFaceX, zFaceX, coinX, coinZ, "X");
-
-        creerBarreVerticale(xFaceZ, zFaceZ);
-        creerCrochetEnTeteAvecRetourVerticalMilieu(xFaceZ, zFaceZ, coinX, coinZ, "Z");
-    };
-
-    for (let i = 0; i < nArmaturesAngles; i++) {
-        const coin = anglePositions[i % 4];
-        const indexDansCoin = Math.floor(i / 4);
-        ajouterArmatureAngleU(coin.x, coin.z, indexDansCoin);
-    }
-
+    // --- 7. CADRES INF. PIED DE POTEAU : NOMBRE LIÉ À at ---
     for (let k = 0; k < nCadresInfPoteau; k++) {
         const yP = (poteau.position.y - hPV / 2) + ((k + 1) * hPV / (nCadresInfPoteau + 1));
         const dim = poteauA - 0.06;
@@ -240,6 +266,7 @@ function addEdges(mesh) {
         group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xF5F5DC })));
     }
 
+    // --- 8. CERCES DE COUTURE : NOMBRE LIÉ À ah ---
     for (let k = 0; k < nCercesCouture; k++) {
         const dimF = L_enc - 0.12;
         const yF = -totalH / 2 + eRadier + (hf * (k + 1) / (nCercesCouture + 1));
@@ -253,6 +280,7 @@ function addEdges(mesh) {
         group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ptsF), matLineJauneVif));
     }
 
+    // --- 9. FERRAILLAGE : NAPPE INFÉRIEURE DU RADIER ---
     const bL = -totalH / 2;
     
     for (let i = 0; i < n1; i++) {
