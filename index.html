@@ -178,10 +178,12 @@ function addEdges(mesh) {
         group.add(bar);
     }
 
-    // --- CORRECTION : 2 ARMATURES INDÉPENDANTES PAR COIN (UNE SEULE TÊTE INDIVIDUELLE PAR BARRE) ---
+    // --- CORRECTION : 2 ARMATURES D'ANGLES D'ENCUVEMENT PAR COIN AVEC TÊTES EN U SUIVANT LEUR SENS ---
     const rBarreEnc = 0.012;
     const posEnc = (L_enc / 2) - 0.05;
     const ecartDeuxBarres = 0.12;
+    const longueurTeteU = 0.10;
+    const descenteTeteU = 0.16;
     const yBasEnc = -totalH / 2 + 0.03;
     const yHautEnc = -totalH / 2 + eRadier + hf - 0.02;
 
@@ -204,28 +206,41 @@ function addEdges(mesh) {
         group.add(tube);
     };
 
-    const ajouterDeuxArmaturesUneTeteDansCoin = (coinX, coinZ) => {
+    const creerBarreAngleAvecTeteU = (x, z, coinX, coinZ, directionRetour) => {
+        const pBas = new THREE.Vector3(x, yBasEnc, z);
+        const pHaut = new THREE.Vector3(x, yHautEnc, z);
+
+        let pRetour;
+        let pDescente;
+
+        if (directionRetour === "X") {
+            pRetour = new THREE.Vector3(x - longueurTeteU * coinX, yHautEnc, z);
+            pDescente = new THREE.Vector3(x - longueurTeteU * coinX, yHautEnc - descenteTeteU, z);
+        } else {
+            pRetour = new THREE.Vector3(x, yHautEnc, z - longueurTeteU * coinZ);
+            pDescente = new THREE.Vector3(x, yHautEnc - descenteTeteU, z - longueurTeteU * coinZ);
+        }
+
+        creerTubeEntreDeuxPoints(pBas, pHaut);
+        creerTubeEntreDeuxPoints(pHaut, pRetour);
+        creerTubeEntreDeuxPoints(pRetour, pDescente);
+    };
+
+    const ajouterDeuxArmaturesAvecTetesUDansCoin = (coinX, coinZ) => {
         const x1 = posEnc * coinX;
         const z1 = posEnc * coinZ;
 
         const x2 = (posEnc - ecartDeuxBarres) * coinX;
         const z2 = posEnc * coinZ;
 
-        // Première barre d'angle droite (propre, de bas en haut, une seule tête)
-        const p1Bas = new THREE.Vector3(x1, yBasEnc, z1);
-        const p1Haut = new THREE.Vector3(x1, yHautEnc, z1);
-        creerTubeEntreDeuxPoints(p1Bas, p1Haut);
-
-        // Deuxième barre d'angle droite juxtaposée (propre, de bas en haut, une seule tête)
-        const p2Bas = new THREE.Vector3(x2, yBasEnc, z2);
-        const p2Haut = new THREE.Vector3(x2, yHautEnc, z2);
-        creerTubeEntreDeuxPoints(p2Bas, p2Haut);
+        creerBarreAngleAvecTeteU(x1, z1, coinX, coinZ, "X");
+        creerBarreAngleAvecTeteU(x2, z2, coinX, coinZ, "X");
     };
 
-    ajouterDeuxArmaturesUneTeteDansCoin(1, 1);
-    ajouterDeuxArmaturesUneTeteDansCoin(1, -1);
-    ajouterDeuxArmaturesUneTeteDansCoin(-1, 1);
-    ajouterDeuxArmaturesUneTeteDansCoin(-1, -1);
+    ajouterDeuxArmaturesAvecTetesUDansCoin(1, 1);
+    ajouterDeuxArmaturesAvecTetesUDansCoin(1, -1);
+    ajouterDeuxArmaturesAvecTetesUDansCoin(-1, 1);
+    ajouterDeuxArmaturesAvecTetesUDansCoin(-1, -1);
 
     // --- 7. CADRES INF. PIED DE POTEAU : NOMBRE LIÉ À at ---
     for (let k = 0; k < nCadresInfPoteau; k++) {
