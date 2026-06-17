@@ -18,7 +18,7 @@
         .info-massif strong { color: #fff; }
         .data-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
         .val { color: #8B4513; font-weight: bold; }
-        .val-green { color: #b08d57; font-weight: bold; }
+        .val-green { color: #ff0000; font-weight: bold; }
         .val-white { color: #ffffff; font-weight: bold; }
     </style>
 </head>
@@ -125,7 +125,7 @@ function addEdges(mesh) {
     });
 
     const matCadresPiedPoteau = new THREE.LineBasicMaterial({
-        color: 0xb08d57,
+        color: 0xff0000,
         linewidth: 2
     });
 
@@ -358,7 +358,7 @@ function addEdges(mesh) {
 
     for (let k = 0; k < nCadresInfPoteau; k++) {
         const yPied = -totalH / 2 + eRadier + ((k + 1) * 0.18 / (nCadresInfPoteau + 1));
-        const dimPied = poteauA + 0.10;
+        const dimPied = poteauA - 0.06;
 
         const ptsPied = [
             new THREE.Vector3(-dimPied / 2, yPied, -dimPied / 2),
