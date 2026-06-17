@@ -181,33 +181,48 @@ function addEdges(mesh) {
     // --- AJOUT : ARMATURES EN U DANS LES 4 EXTRÉMITÉS DE L'ENCUVEMENT ---
     const rBarreEnc = 0.012;
     const longRetour = 0.14;
+    const descenteCrochet = 0.09;
     const ecartBarresAngle = 0.045;
     const posEnc = (L_enc / 2) - 0.05;
     const hautBrin = hf + eRadier - 0.05;
-    const yBasEnc = -totalH / 2 + 0.03;
     const yHautEnc = -totalH / 2 + eRadier + hf - 0.02;
 
+    const creerTubeEntreDeuxPoints = (p1, p2) => {
+        const direction = new THREE.Vector3().subVectors(p2, p1);
+        const longueur = direction.length();
+        const tube = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longueur, 8), matBeigeAs);
+        tube.position.copy(new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5));
+        tube.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.clone().normalize());
+        addEdges(tube);
+        group.add(tube);
+    };
+
     const creerBarreVerticale = (x, z) => {
-        const vBrin = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, hautBrin, 8), matBeigeAs);
-        vBrin.position.set(x, (-totalH / 2) + (hautBrin / 2) + 0.02, z);
-        addEdges(vBrin);
-        group.add(vBrin);
+        const pBas = new THREE.Vector3(x, -totalH / 2 + 0.03, z);
+        const pHaut = new THREE.Vector3(x, yHautEnc, z);
+        creerTubeEntreDeuxPoints(pBas, pHaut);
     };
 
-    const creerRetourHorizontalX = (x, z, signe) => {
-        const retour = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
-        retour.rotation.z = Math.PI / 2;
-        retour.position.set(x - (longRetour / 2) * signe, yHautEnc, z);
-        addEdges(retour);
-        group.add(retour);
-    };
+    const creerCrochetUEnTete = (x, z, coinX, coinZ, orientation) => {
+        const p1 = new THREE.Vector3(x, yHautEnc, z);
 
-    const creerRetourHorizontalZ = (x, z, signe) => {
-        const retour = new THREE.Mesh(new THREE.CylinderGeometry(rBarreEnc, rBarreEnc, longRetour, 8), matBeigeAs);
-        retour.rotation.x = Math.PI / 2;
-        retour.position.set(x, yHautEnc, z - (longRetour / 2) * signe);
-        addEdges(retour);
-        group.add(retour);
+        let p2;
+        let p3;
+        let p4;
+
+        if (orientation === "X") {
+            p2 = new THREE.Vector3(x - longRetour * coinX, yHautEnc, z);
+            p3 = new THREE.Vector3(x - longRetour * coinX, yHautEnc - descenteCrochet, z);
+            p4 = new THREE.Vector3(x, yHautEnc - descenteCrochet, z);
+        } else {
+            p2 = new THREE.Vector3(x, yHautEnc, z - longRetour * coinZ);
+            p3 = new THREE.Vector3(x, yHautEnc - descenteCrochet, z - longRetour * coinZ);
+            p4 = new THREE.Vector3(x, yHautEnc - descenteCrochet, z);
+        }
+
+        creerTubeEntreDeuxPoints(p1, p2);
+        creerTubeEntreDeuxPoints(p2, p3);
+        creerTubeEntreDeuxPoints(p3, p4);
     };
 
     const ajouterArmatureAngleU = (coinX, coinZ, indexDansCoin) => {
@@ -220,10 +235,10 @@ function addEdges(mesh) {
         const zFaceZ = (posEnc - decalage) * coinZ;
 
         creerBarreVerticale(xFaceX, zFaceX);
-        creerRetourHorizontalX(xFaceX, zFaceX, coinX);
+        creerCrochetUEnTete(xFaceX, zFaceX, coinX, coinZ, "X");
 
         creerBarreVerticale(xFaceZ, zFaceZ);
-        creerRetourHorizontalZ(xFaceZ, zFaceZ, coinZ);
+        creerCrochetUEnTete(xFaceZ, zFaceZ, coinX, coinZ, "Z");
     };
 
     for (let i = 0; i < nArmaturesAngles; i++) {
