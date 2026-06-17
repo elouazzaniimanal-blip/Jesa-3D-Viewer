@@ -356,9 +356,34 @@ function addEdges(mesh) {
         );
     }
 
+    const creerTubeRougeCadre = (p1, p2) => {
+        const direction = new THREE.Vector3().subVectors(p2, p1);
+        const longueur = direction.length();
+
+        const tube = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.006, 0.006, longueur, 8),
+            new THREE.MeshStandardMaterial({
+                color: 0xff0000,
+                metalness: 0.3,
+                roughness: 0.2
+            })
+        );
+
+        tube.position.copy(
+            new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5)
+        );
+
+        tube.quaternion.setFromUnitVectors(
+            new THREE.Vector3(0, 1, 0),
+            direction.clone().normalize()
+        );
+
+        group.add(tube);
+    };
+
     for (let k = 0; k < nCadresInfPoteau; k++) {
-        const yPied = -totalH / 2 + eRadier + ((k + 1) * 0.18 / (nCadresInfPoteau + 1));
-        const dimPied = poteauA - 0.06;
+        const yPied = -totalH / 2 + eRadier + 0.04 + ((k + 1) * 0.22 / (nCadresInfPoteau + 1));
+        const dimPied = poteauA - 0.02;
 
         const ptsPied = [
             new THREE.Vector3(-dimPied / 2, yPied, -dimPied / 2),
@@ -368,12 +393,9 @@ function addEdges(mesh) {
             new THREE.Vector3(-dimPied / 2, yPied, -dimPied / 2)
         ];
 
-        group.add(
-            new THREE.Line(
-                new THREE.BufferGeometry().setFromPoints(ptsPied),
-                matCadresPiedPoteau
-            )
-        );
+        for (let i = 0; i < ptsPied.length - 1; i++) {
+            creerTubeRougeCadre(ptsPied[i], ptsPied[i + 1]);
+        }
     }
 
     for (let k = 0; k < nCercesCouture; k++) {
