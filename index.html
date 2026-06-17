@@ -206,9 +206,9 @@ function addEdges(mesh) {
     const posEnc = (L_enc / 2) - 0.05;
     const ecartDeuxBarres = 0.12;
     const longueurTeteU = 0.10;
-    const descenteTeteU = 0.16;
     const yBasEnc = -totalH / 2 + 0.03;
     const yHautEnc = -totalH / 2 + eRadier + hf - 0.02;
+    const yMilieuEnc = yBasEnc + ((yHautEnc - yBasEnc) / 2);
 
     const creerTubeEntreDeuxPoints = (p1, p2) => {
         const direction = new THREE.Vector3().subVectors(p2, p1);
@@ -232,59 +232,62 @@ function addEdges(mesh) {
         group.add(tube);
     };
 
-    const creerBarreAngleAvecTeteU = (x, z, coinX, coinZ, directionRetour) => {
-        const pBas = new THREE.Vector3(x, yBasEnc, z);
-        const pHaut = new THREE.Vector3(x, yHautEnc, z);
+    const creerArmatureContinueFaceZ = (z, coinZ) => {
+        const xGauche = -posEnc;
+        const xDroite = posEnc;
 
-        let pRetour;
-        let pDescente;
+        const pBasGauche = new THREE.Vector3(xGauche, yBasEnc, z);
+        const pHautGauche = new THREE.Vector3(xGauche, yHautEnc, z);
+        const pHautDroite = new THREE.Vector3(xDroite, yHautEnc, z);
+        const pBasDroite = new THREE.Vector3(xDroite, yBasEnc, z);
 
-        if (directionRetour === "X") {
-            pRetour = new THREE.Vector3(
-                x - longueurTeteU * coinX,
-                yHautEnc,
-                z
-            );
+        const pRetourGauche = new THREE.Vector3(xGauche, yHautEnc, z - longueurTeteU * coinZ);
+        const pDescenteGauche = new THREE.Vector3(xGauche, yMilieuEnc, z - longueurTeteU * coinZ);
 
-            pDescente = new THREE.Vector3(
-                x - longueurTeteU * coinX,
-                yHautEnc - descenteTeteU,
-                z
-            );
-        } else {
-            pRetour = new THREE.Vector3(
-                x,
-                yHautEnc,
-                z - longueurTeteU * coinZ
-            );
+        const pRetourDroite = new THREE.Vector3(xDroite, yHautEnc, z - longueurTeteU * coinZ);
+        const pDescenteDroite = new THREE.Vector3(xDroite, yMilieuEnc, z - longueurTeteU * coinZ);
 
-            pDescente = new THREE.Vector3(
-                x,
-                yHautEnc - descenteTeteU,
-                z - longueurTeteU * coinZ
-            );
-        }
+        creerTubeEntreDeuxPoints(pBasGauche, pHautGauche);
+        creerTubeEntreDeuxPoints(pHautGauche, pHautDroite);
+        creerTubeEntreDeuxPoints(pHautDroite, pBasDroite);
 
-        creerTubeEntreDeuxPoints(pBas, pHaut);
-        creerTubeEntreDeuxPoints(pHaut, pRetour);
-        creerTubeEntreDeuxPoints(pRetour, pDescente);
+        creerTubeEntreDeuxPoints(pHautGauche, pRetourGauche);
+        creerTubeEntreDeuxPoints(pRetourGauche, pDescenteGauche);
+
+        creerTubeEntreDeuxPoints(pHautDroite, pRetourDroite);
+        creerTubeEntreDeuxPoints(pRetourDroite, pDescenteDroite);
     };
 
-    const ajouterDeuxArmaturesAvecTetesOpposeesDansCoin = (coinX, coinZ) => {
-        const x1 = posEnc * coinX;
-        const z1 = posEnc * coinZ;
+    const creerArmatureContinueFaceX = (x, coinX) => {
+        const zAvant = -posEnc + ecartDeuxBarres;
+        const zArriere = posEnc - ecartDeuxBarres;
 
-        const x2 = posEnc * coinX;
-        const z2 = (posEnc - ecartDeuxBarres) * coinZ;
+        const pBasAvant = new THREE.Vector3(x, yBasEnc, zAvant);
+        const pHautAvant = new THREE.Vector3(x, yHautEnc, zAvant);
+        const pHautArriere = new THREE.Vector3(x, yHautEnc, zArriere);
+        const pBasArriere = new THREE.Vector3(x, yBasEnc, zArriere);
 
-        creerBarreAngleAvecTeteU(x1, z1, coinX, coinZ, "X");
-        creerBarreAngleAvecTeteU(x2, z2, coinX, coinZ, "Z");
+        const pRetourAvant = new THREE.Vector3(x - longueurTeteU * coinX, yHautEnc, zAvant);
+        const pDescenteAvant = new THREE.Vector3(x - longueurTeteU * coinX, yMilieuEnc, zAvant);
+
+        const pRetourArriere = new THREE.Vector3(x - longueurTeteU * coinX, yHautEnc, zArriere);
+        const pDescenteArriere = new THREE.Vector3(x - longueurTeteU * coinX, yMilieuEnc, zArriere);
+
+        creerTubeEntreDeuxPoints(pBasAvant, pHautAvant);
+        creerTubeEntreDeuxPoints(pHautAvant, pHautArriere);
+        creerTubeEntreDeuxPoints(pHautArriere, pBasArriere);
+
+        creerTubeEntreDeuxPoints(pHautAvant, pRetourAvant);
+        creerTubeEntreDeuxPoints(pRetourAvant, pDescenteAvant);
+
+        creerTubeEntreDeuxPoints(pHautArriere, pRetourArriere);
+        creerTubeEntreDeuxPoints(pRetourArriere, pDescenteArriere);
     };
 
-    ajouterDeuxArmaturesAvecTetesOpposeesDansCoin(1, 1);
-    ajouterDeuxArmaturesAvecTetesOpposeesDansCoin(1, -1);
-    ajouterDeuxArmaturesAvecTetesOpposeesDansCoin(-1, 1);
-    ajouterDeuxArmaturesAvecTetesOpposeesDansCoin(-1, -1);
+    creerArmatureContinueFaceZ(posEnc, 1);
+    creerArmatureContinueFaceZ(-posEnc, -1);
+    creerArmatureContinueFaceX(posEnc, 1);
+    creerArmatureContinueFaceX(-posEnc, -1);
 
     for (let k = 0; k < nCadresInfPoteau; k++) {
         const yP = (poteau.position.y - hPV / 2) + ((k + 1) * hPV / (nCadresInfPoteau + 1));
